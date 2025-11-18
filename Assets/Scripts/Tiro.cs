@@ -11,13 +11,32 @@ public class Tiro : MonoBehaviour
     public float perfectShotForce = 0f;
     public Transform hoop;
 
+    [Header("Trajectory Settings")]
+    public LineRenderer trajectoryLine;
+    public int trajectoryResolution = 30;
+    public float timeStep = 0.1f;
+
     void Update()
     {
+        // Jugador siempre mirando al aro
+        transform.LookAt(hoop.position);
+
+        // Cálculo previo a dibujar la trayectoria
+        float power = shotBar.GetPower();
+        float force = Mathf.Lerp(minForce, maxForce, power);
+
+        Vector3 shootDirection = (transform.forward * arcMultiplier + Vector3.up).normalized;
+        Vector3 startVelocity = shootDirection * force;
+
+        // Dibujar curva previa
+        DrawTrajectory(ballRb.transform.position, startVelocity);
+
+        // Si dispara
         if (Input.GetKeyDown(KeyCode.Space))
         {
             Shoot();
+            ClearTrajectory();
         }
-        transform.LookAt(hoop.position);
     }
 
     void Shoot()
@@ -30,35 +49,57 @@ public class Tiro : MonoBehaviour
             transform.rotation = targetRot;
         }
 
-        float power = shotBar.GetPower(); // 0 a 1
-        float force = power * maxForce;
+        float power = shotBar.GetPower();
+        float force = Mathf.Lerp(minForce, maxForce, power);
 
-        Rigidbody ballClone = (Rigidbody)Instantiate(ballRb, transform.position, transform.rotation);
+        Rigidbody ballClone = Instantiate(ballRb, transform.position, transform.rotation);
         ballClone.linearVelocity = transform.forward * force;
 
         Vector3 shootDirection = (transform.forward * arcMultiplier + Vector3.up).normalized;
 
-        ballRb.AddForce(shootDirection * force, ForceMode.Impulse);
+        ballClone.AddForce(shootDirection * force, ForceMode.Impulse);
 
         if (shotBar.IsPerfect())
         {
-            ShootPerfect();
+            ShootPerfect(ballClone);
             return;
         }
     }
 
-        // Si no es perfecto, tiro normal
-
-    void ShootPerfect()
+    void ShootPerfect(Rigidbody ball)
     {
         Vector3 target = hoop.position;
 
-        // Dirección hacia la canasta
-        Vector3 direction = (target - ballRb.transform.position).normalized;
+        Vector3 direction = (target - ball.transform.position).normalized;
 
-        float perfectForce = perfectShotForce; // define una fuerza especial
-        ballRb.AddForce(direction * perfectForce, ForceMode.Impulse);
+        ball.AddForce(direction * perfectShotForce, ForceMode.Impulse);
 
         Debug.Log("PERFECT SHOT!");
+    }
+
+    // ---- TRAYECTORIA ----
+
+    void DrawTrajectory(Vector3 startPos, Vector3 startVelocity)
+    {
+        Vector3[] points = new Vector3[trajectoryResolution];
+
+        for (int i = 0; i < trajectoryResolution; i++)
+        {
+            float t = i * timeStep;
+
+            Vector3 point = startPos +
+                            startVelocity * t +
+                            0.5f * Physics.gravity * t * t;
+
+            points[i] = point;
+        }
+
+        trajectoryLine.positionCount = trajectoryResolution;
+        trajectoryLine.SetPositions(points);
+    }
+
+    void ClearTrajectory()
+    {
+        trajectoryLine.positionCount = 0;
     }
 }
