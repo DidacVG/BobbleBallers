@@ -36,7 +36,7 @@ public class Tiro : MonoBehaviour
         Rigidbody ballClone = (Rigidbody)Instantiate(ballRb, transform.position, transform.rotation);
         ballClone.linearVelocity = transform.forward * force;
 
-        Vector3 shootDirection = (transform.forward + Vector3.up * arcMultiplier).normalized;
+        Vector3 shootDirection = (transform.forward * arcMultiplier + Vector3.up).normalized;
 
         ballRb.AddForce(shootDirection * force, ForceMode.Impulse);
 

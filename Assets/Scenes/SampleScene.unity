@@ -913,7 +913,7 @@ MonoBehaviour:
   shotBar: {fileID: 830500347}
   maxForce: 25
   minForce: 7.5
-  arcMultiplier: 1
+  arcMultiplier: 1.5
   perfectShotForce: 17.5
   hoop: {fileID: 381338215}
 --- !u!1 &1515784393
@@ -1175,9 +1175,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   distanciaMaxima: 2
   pickupLayer:
-    serializedVersion: 2
     m_Bits: 8
   puntoAgarre: {fileID: 1866250071}
+  objetoActual: {fileID: 0}
+  cam: {fileID: 0}
 --- !u!1 &1911109708
 GameObject:
   m_ObjectHideFlags: 0
