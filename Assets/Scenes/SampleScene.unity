@@ -991,6 +991,7 @@ MonoBehaviour:
   arcMultiplier: 1.5
   perfectShotForce: 17.5
   hoop: {fileID: 381338215}
+  launchPoint: {fileID: 1425073271}
   trajectoryLine: {fileID: 1425073273}
   trajectoryResolution: 30
   timeStep: 0.1
@@ -1018,7 +1019,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: e21ad0ceb4df42940ac053df69c4420d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1050,7 +1051,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 1
+        value: 0
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -1086,7 +1087,7 @@ LineRenderer:
       atime5: 0
       atime6: 0
       atime7: 0
-      m_Mode: 0
+      m_Mode: 1
       m_ColorSpace: 0
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2

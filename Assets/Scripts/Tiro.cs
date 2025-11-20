@@ -10,6 +10,7 @@ public class Tiro : MonoBehaviour
     public float arcMultiplier = 0.5f;
     public float perfectShotForce = 0f;
     public Transform hoop;
+    public Transform launchPoint;
 
     [Header("Trajectory Settings")]
     public LineRenderer trajectoryLine;
@@ -29,7 +30,7 @@ public class Tiro : MonoBehaviour
         Vector3 startVelocity = shootDirection * force;
 
         // Dibujar curva previa
-        DrawTrajectory(ballRb.transform.position, startVelocity);
+        DrawTrajectory(launchPoint.position, startVelocity);
 
         // Si dispara
         if (Input.GetKeyDown(KeyCode.Space))
@@ -52,7 +53,7 @@ public class Tiro : MonoBehaviour
         float power = shotBar.GetPower();
         float force = Mathf.Lerp(minForce, maxForce, power);
 
-        Rigidbody ballClone = Instantiate(ballRb, transform.position, transform.rotation);
+        Rigidbody ballClone = Instantiate(ballRb, launchPoint.position, launchPoint.rotation);
         ballClone.linearVelocity = transform.forward * force;
 
         Vector3 shootDirection = (transform.forward * arcMultiplier + Vector3.up).normalized;
