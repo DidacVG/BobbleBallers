@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class Tiro : MonoBehaviour
 {
@@ -17,26 +18,30 @@ public class Tiro : MonoBehaviour
     public int trajectoryResolution = 30;
     public float timeStep = 0.1f;
 
+    [Header("Freeze Settings")]
+    public float freezeDuration = 1.5f;
+    private bool freezeTrajectory = false;
+
     void Update()
     {
-        // Jugador siempre mirando al aro
         transform.LookAt(hoop.position);
 
-        // Cálculo previo a dibujar la trayectoria
-        float power = shotBar.GetPower();
-        float force = Mathf.Lerp(minForce, maxForce, power);
+        // NO dibujar si está congelada
+        if (!freezeTrajectory)
+        {
+            float power = shotBar.GetPower();
+            float force = Mathf.Lerp(minForce, maxForce, power);
 
-        Vector3 shootDirection = (transform.forward * arcMultiplier + Vector3.up).normalized;
-        Vector3 startVelocity = shootDirection * force;
+            Vector3 shootDirection = (transform.forward * arcMultiplier + Vector3.up).normalized;
+            Vector3 startVelocity = shootDirection * force;
 
-        // Dibujar curva previa
-        DrawTrajectory(launchPoint.position, startVelocity);
+            DrawTrajectory(launchPoint.position, startVelocity);
+        }
 
-        // Si dispara
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             Shoot();
-            ClearTrajectory();
+            StartCoroutine(FreezeTrajectory());
         }
     }
 
@@ -63,14 +68,12 @@ public class Tiro : MonoBehaviour
         if (shotBar.IsPerfect())
         {
             ShootPerfect(ballClone);
-            return;
         }
     }
 
     void ShootPerfect(Rigidbody ball)
     {
         Vector3 target = hoop.position;
-
         Vector3 direction = (target - ball.transform.position).normalized;
 
         ball.AddForce(direction * perfectShotForce, ForceMode.Impulse);
@@ -79,7 +82,6 @@ public class Tiro : MonoBehaviour
     }
 
     // ---- TRAYECTORIA ----
-
     void DrawTrajectory(Vector3 startPos, Vector3 startVelocity)
     {
         Vector3[] points = new Vector3[trajectoryResolution];
@@ -102,5 +104,18 @@ public class Tiro : MonoBehaviour
     void ClearTrajectory()
     {
         trajectoryLine.positionCount = 0;
+    }
+
+    // ---- CONGELACIÓN ----
+    IEnumerator FreezeTrajectory()
+    {
+        freezeTrajectory = true;
+        // La línea permanece exactamente como estaba 
+
+        yield return new WaitForSeconds(freezeDuration);
+
+        // Se limpia y se reactivará al entrar en Update()
+        ClearTrajectory();
+        freezeTrajectory = false;
     }
 }
