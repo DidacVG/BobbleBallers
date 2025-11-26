@@ -13,35 +13,12 @@ public class Tiro : MonoBehaviour
     public Transform hoop;
     public Transform launchPoint;
 
-    [Header("Trajectory Settings")]
-    public LineRenderer trajectoryLine;
-    public int trajectoryResolution = 30;
-    public float timeStep = 0.1f;
-
-    [Header("Freeze Settings")]
-    public float freezeDuration = 1.5f;
-    private bool freezeTrajectory = false;
-
     void Update()
     {
         transform.LookAt(hoop.position);
-
-        // NO dibujar si está congelada
-        if (!freezeTrajectory)
-        {
-            float power = shotBar.GetPower();
-            float force = Mathf.Lerp(minForce, maxForce, power);
-
-            Vector3 shootDirection = (transform.forward * arcMultiplier + Vector3.up).normalized;
-            Vector3 startVelocity = shootDirection * force;
-
-            DrawTrajectory(launchPoint.position, startVelocity);
-        }
-
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             Shoot();
-            StartCoroutine(FreezeTrajectory());
         }
     }
 
@@ -67,7 +44,7 @@ public class Tiro : MonoBehaviour
 
         if (shotBar.IsPerfect())
         {
-            ShootPerfect(ballClone);
+            //ShootPerfect(ballClone);
         }
     }
 
@@ -81,41 +58,4 @@ public class Tiro : MonoBehaviour
         Debug.Log("PERFECT SHOT!");
     }
 
-    // ---- TRAYECTORIA ----
-    void DrawTrajectory(Vector3 startPos, Vector3 startVelocity)
-    {
-        Vector3[] points = new Vector3[trajectoryResolution];
-
-        for (int i = 0; i < trajectoryResolution; i++)
-        {
-            float t = i * timeStep;
-
-            Vector3 point = startPos +
-                            startVelocity * t +
-                            0.5f * Physics.gravity * t * t;
-
-            points[i] = point;
-        }
-
-        trajectoryLine.positionCount = trajectoryResolution;
-        trajectoryLine.SetPositions(points);
-    }
-
-    void ClearTrajectory()
-    {
-        trajectoryLine.positionCount = 0;
-    }
-
-    // ---- CONGELACIÓN ----
-    IEnumerator FreezeTrajectory()
-    {
-        freezeTrajectory = true;
-        // La línea permanece exactamente como estaba 
-
-        yield return new WaitForSeconds(freezeDuration);
-
-        // Se limpia y se reactivará al entrar en Update()
-        ClearTrajectory();
-        freezeTrajectory = false;
-    }
 }

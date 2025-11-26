@@ -6,6 +6,7 @@ public class MoverPersonajes : MonoBehaviour
     public float launchMultiplier = 5f;
     public float maxForce = 300f;
     public float minVelocityToMove = 0.1f;
+    public float rotationSpeed = 10f;  // Velocidad de rotación
 
     public Rigidbody rb;
     public LineRenderer lineRenderer;
@@ -24,16 +25,41 @@ public class MoverPersonajes : MonoBehaviour
 
     void Update()
     {
-        // Comprobación segura de velocidad: usamos GetPointVelocity y comprobamos sqrMagnitude
+        // Obtener velocidad real del rigidbody
         Vector3 currentVel = rb.IsSleeping() ? Vector3.zero : rb.GetPointVelocity(rb.worldCenterOfMass);
+
+        // ---- ROTACIÓN HACIA DIRECCIÓN DE MOVIMIENTO ----
         if (currentVel.sqrMagnitude > minVelocityToMove * minVelocityToMove)
         {
+            Vector3 horizontalVel = new Vector3(currentVel.x, 0, currentVel.z);
+
+            // Girar hacia la dirección de movimiento
+            Quaternion targetRotation = Quaternion.LookRotation(horizontalVel, Vector3.up);
+
+            // ---- INCLINACIÓN HACIA ATRÁS SEGÚN VELOCIDAD ----
+            float speed = horizontalVel.magnitude;
+            float maxTilt = 30f; // grados máximos hacia atrás
+            float tiltAmount = Mathf.Lerp(0, maxTilt, speed / 10f); // 10 = velocidad a la que alcanza el máximo
+
+            Quaternion tiltRotation = Quaternion.Euler(tiltAmount, 0, 0);
+
+            // Combinar giro + inclinación
+            Quaternion finalRotation = targetRotation * tiltRotation;
+
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                finalRotation,
+                Time.deltaTime * rotationSpeed
+            );
+
+            // No permitir arrastrar mientras se mueve
             dragging = false;
             lineRenderer.enabled = false;
             return;
         }
 
-        // Iniciar arrastre
+        // --- SI ESTÁ QUIETO → PERMITE ARRASTRAR ---
+
         if (Input.GetMouseButtonDown(0))
         {
             dragging = true;
@@ -41,7 +67,6 @@ public class MoverPersonajes : MonoBehaviour
             lineRenderer.enabled = true;
         }
 
-        // Mientras arrastras → dibujar línea
         if (dragging)
         {
             currentPos = Input.mousePosition;
@@ -49,7 +74,6 @@ public class MoverPersonajes : MonoBehaviour
             DrawLine(drag);
         }
 
-        // Soltar → lanzar y ocultar línea
         if (Input.GetMouseButtonUp(0) && dragging)
         {
             dragging = false;
@@ -68,8 +92,8 @@ public class MoverPersonajes : MonoBehaviour
         Vector3 start = rb.transform.position;
         Vector3 end = start + new Vector3(opposite.x, 0f, opposite.y) * (strength / 40f);
 
-        lineRenderer.SetPosition(0, start);
-        lineRenderer.SetPosition(1, end);
+        lineRenderer.SetPosition(0, start + Vector3.up * 0.1f);
+        lineRenderer.SetPosition(1, end + Vector3.up * 0.1f);
     }
 
     void LaunchOpposite(Vector2 drag)
