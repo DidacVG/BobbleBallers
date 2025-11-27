@@ -235,7 +235,7 @@ MeshCollider:
   m_ProvidesContacts: 1
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 1
+  m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -4656851974828290883, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
 --- !u!1 &196604969 stripped
@@ -860,7 +860,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 707838028}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5c60177d023d49e48911a61fc7685b59, type: 3}
   m_Name: 
@@ -1018,8 +1018,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   arrow: {fileID: 1911109709}
   speed: 200
-  minY: -90
-  maxY: 90
+  minY: -180
+  maxY: 180
   perfectMinY: -20
   perfectMaxY: 20
 --- !u!1001 &846036891
@@ -1119,7 +1119,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 917878900}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b11de765acb6dda4f866d40107c3c6ff, type: 3}
   m_Name: 
@@ -1527,17 +1527,16 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1425073270}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 293682d7fe9042f4b9462fc716c4a8b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ballRb: {fileID: 3079716689572082137, guid: 3b0e6fd0961a69b41ae0e753b67b3f43, type: 3}
   shotBar: {fileID: 830500347}
-  maxForce: 10
-  minForce: 4
-  arcMultiplier: 0.05
-  perfectShotForce: 5
+  maxForce: 15
+  minForce: 9.6
+  arcMultiplier: 1
   hoop: {fileID: 2023689431}
   launchPoint: {fileID: 1425073271}
 --- !u!4 &1636491998 stripped
@@ -1774,7 +1773,7 @@ Transform:
   m_GameObject: {fileID: 2023689430}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -2.272961, y: 5.12, z: 0}
+  m_LocalPosition: {x: -2.272961, y: 5.1318936, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

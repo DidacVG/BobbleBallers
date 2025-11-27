@@ -1,22 +1,25 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
-using System.Collections;
 
 public class Tiro : MonoBehaviour
 {
     public Rigidbody ballRb;
     public BarraTiro shotBar;
-    public float maxForce = 15f;
-    public float minForce = 7.5f;
-    public float arcMultiplier = 0.5f;
-    public float perfectShotForce = 0f;
+
+    public float maxForce = 10f;
+    public float minForce = 4f;
+    public float arcMultiplier = 0.15f;
+
     public Transform hoop;
     public Transform launchPoint;
 
     void Update()
     {
+        // Mirar siempre al aro
         transform.LookAt(hoop.position);
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+
+        // Detectar espacio con Input System nuevo
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             Shoot();
         }
@@ -24,38 +27,24 @@ public class Tiro : MonoBehaviour
 
     void Shoot()
     {
-        Vector3 direction = hoop.position - transform.position;
-
-        if (direction.magnitude > 0.1f)
+        if (ballRb == null || launchPoint == null)
         {
-            Quaternion targetRot = Quaternion.LookRotation(direction);
-            transform.rotation = targetRot;
+            Debug.LogError("BallRb o LaunchPoint no asignados.");
+            return;
         }
+
+        // Crear pelota
+        Rigidbody ballClone = Instantiate(ballRb, launchPoint.position, launchPoint.rotation);
 
         float power = shotBar.GetPower();
         float force = Mathf.Lerp(minForce, maxForce, power);
 
-        Rigidbody ballClone = Instantiate(ballRb, launchPoint.position, launchPoint.rotation);
-        ballClone.linearVelocity = transform.forward * force;
+        // Dirección con un poco de arco
+        Vector3 shootDirection = (transform.forward + Vector3.up * arcMultiplier).normalized;
 
-        Vector3 shootDirection = (transform.forward * arcMultiplier + Vector3.up).normalized;
+        // NUEVO SISTEMA → usar linearVelocity
+        ballClone.linearVelocity = shootDirection * force;
 
-        ballClone.AddForce(shootDirection * force, ForceMode.Impulse);
-
-        if (shotBar.IsPerfect())
-        {
-            //ShootPerfect(ballClone);
-        }
+        Debug.Log("Pelota creada y lanzada con linearVelocity: " + ballClone.linearVelocity);
     }
-
-    void ShootPerfect(Rigidbody ball)
-    {
-        Vector3 target = hoop.position;
-        Vector3 direction = (target - ball.transform.position).normalized;
-
-        ball.AddForce(direction * perfectShotForce, ForceMode.Impulse);
-
-        Debug.Log("PERFECT SHOT!");
-    }
-
 }
