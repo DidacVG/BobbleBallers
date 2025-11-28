@@ -755,6 +755,7 @@ GameObject:
   - component: {fileID: 707838032}
   - component: {fileID: 707838031}
   - component: {fileID: 707838030}
+  - component: {fileID: 707838036}
   - component: {fileID: 707838034}
   - component: {fileID: 707838035}
   m_Layer: 0
@@ -869,6 +870,44 @@ MonoBehaviour:
   HandPosition: {fileID: 1425073271}
   BallDetector: {fileID: 337676642}
   HasTheBall: 0
+--- !u!114 &707838036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 707838028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Actions: {fileID: -944628639613478452, guid: b9f84c3c8e54e7f4d9262447865ab2ed, type: 3}
+  m_NotificationBehavior: 2
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents:
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 1320e292-58a3-448c-8043-75c4fac771a3
+    m_ActionName: 'Player/Movement[/Keyboard/w,/Keyboard/s,/Keyboard/a,/Keyboard/d,/DualSenseGamepadHID/leftStick]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 0df37504-5d29-47ad-8a05-060e887d4631
+    m_ActionName: 'Player/Shoot[/Keyboard/space,/DualSenseGamepadHID/buttonSouth]'
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: Keyboard
+  m_DefaultActionMap: Player
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
 --- !u!1 &715486103 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -6733177361254619370, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
@@ -1179,10 +1218,38 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 6547ad8cdc5861246b619739a9fefafa, type: 2}
+    - target: {fileID: -3542852092398272455, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 5.061
+      objectReference: {fileID: 0}
     - target: {fileID: -1894724209676108957, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 6547ad8cdc5861246b619739a9fefafa, type: 2}
+    - target: {fileID: -1722051101212798438, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 71.02661
+      objectReference: {fileID: 0}
+    - target: {fileID: -1722051101212798438, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 71.02661
+      objectReference: {fileID: 0}
+    - target: {fileID: -1722051101212798438, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 71.02661
+      objectReference: {fileID: 0}
+    - target: {fileID: -1722051101212798438, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.389
+      objectReference: {fileID: 0}
+    - target: {fileID: -1722051101212798438, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 5.062
+      objectReference: {fileID: 0}
+    - target: {fileID: -1722051101212798438, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0
+      objectReference: {fileID: 0}
     - target: {fileID: -1461304994638716399, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -1198,6 +1265,18 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
       propertyPath: m_Name
       value: CanastaUVs
+      objectReference: {fileID: 0}
+    - target: {fileID: 3316992658331686828, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1.379
+      objectReference: {fileID: 0}
+    - target: {fileID: 3316992658331686828, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.616
+      objectReference: {fileID: 0}
+    - target: {fileID: 3316992658331686828, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.219
       objectReference: {fileID: 0}
     - target: {fileID: 4106016059136590145, guid: f7c8e60cd4ef81f40b3a6dbd44630473, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
