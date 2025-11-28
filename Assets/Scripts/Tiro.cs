@@ -13,12 +13,20 @@ public class Tiro : MonoBehaviour
     public Transform hoop;
     public Transform launchPoint;
 
+    [Header("Velocidad extra")]
+    public float speedBoost = 1.5f;
+
+    [Header("Control de posesión")]
+    public bool HasTheBall = true;   // << NUEVO
+
     void Update()
     {
-        // Mirar siempre al aro
         transform.LookAt(hoop.position);
 
-        // Detectar espacio con Input System nuevo
+        // Si NO tiene la pelota, no puede tirar
+        if (!HasTheBall)
+            return;
+
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             Shoot();
@@ -33,18 +41,18 @@ public class Tiro : MonoBehaviour
             return;
         }
 
-        // Crear pelota
+        // Evita que pueda tirar de nuevo hasta que reciba otra pelota
+        HasTheBall = false;
+
         Rigidbody ballClone = Instantiate(ballRb, launchPoint.position, launchPoint.rotation);
 
         float power = shotBar.GetPower();
         float force = Mathf.Lerp(minForce, maxForce, power);
 
-        // Dirección con un poco de arco
         Vector3 shootDirection = (transform.forward + Vector3.up * arcMultiplier).normalized;
 
-        // NUEVO SISTEMA → usar linearVelocity
-        ballClone.linearVelocity = shootDirection * force;
+        ballClone.linearVelocity = shootDirection * force * speedBoost;
 
-        Debug.Log("Pelota creada y lanzada con linearVelocity: " + ballClone.linearVelocity);
+        Debug.Log("Pelota creada con velocidad: " + ballClone.linearVelocity);
     }
 }
