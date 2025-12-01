@@ -3,24 +3,27 @@ using UnityEngine.InputSystem;
 
 public class MoverPersonajes : MonoBehaviour
 {
-    public DetectarSuelo detectorSuelo;
-
-    public float launchMultiplier = 5f;
-    public float maxForce = 300f;
-    public float minVelocityToMove = 0.1f;
+    public float launchMultiplier = 3f;
+    public float maxForce = 80f;
+    public float maxVelocity = 10f;
+    public float minDragThreshold = 0.25f;
+    public float releaseThreshold = 0.2f;
     public float rotationSpeed = 10f;
     public float maxTilt = 30f;
 
     public Rigidbody rb;
     public LineRenderer lineRenderer;
-    private bool isActivePlayer = false;
 
+    private bool isActivePlayer = false;
     private bool dragging = false;
-    private Vector2 stickStart;
-    private Vector2 currentStick;
+
+    private Vector2 storedDirection;       // ← dirección máxima memorizada
+    private float storedMagnitude = 0;     // ← magnitud máxima memorizada
 
     private Gamepad pad;
-    private bool vibrating = false;
+
+    public GameObject selectionCirclePrefab;
+    private GameObject selectionCircleInstance;
 
     void Start()
     {
@@ -31,25 +34,31 @@ public class MoverPersonajes : MonoBehaviour
         lineRenderer.enabled = false;
 
         pad = Gamepad.current;
+
+        // Crear círculo de selección
+        if (selectionCirclePrefab != null)
+        {
+            selectionCircleInstance = Instantiate(selectionCirclePrefab, transform);
+            selectionCircleInstance.transform.localPosition = Vector3.zero + Vector3.up * 3f;
+            selectionCircleInstance.SetActive(false);
+        }
     }
 
     void Update()
     {
-        if (pad == null || !isActivePlayer) return;
+        if (!isActivePlayer || pad == null) return;
 
-        Vector3 currentVel = rb.IsSleeping() ? Vector3.zero : rb.GetPointVelocity(rb.worldCenterOfMass);
+        Vector3 vel = rb.linearVelocity;
 
-        // ---------------- ROTACIÓN EN MOVIMIENTO ----------------
-        if (currentVel.sqrMagnitude > minVelocityToMove * minVelocityToMove)
+        // ---------------- ROTACIÓN MIENTRAS SE MUEVE ----------------
+        if (vel.sqrMagnitude > 0.05f)
         {
-            Vector3 hVel = new Vector3(currentVel.x, 0, currentVel.z);
-            Quaternion targetRot = Quaternion.LookRotation(hVel);
-
-            float speed = hVel.magnitude;
-            float tilt = Mathf.Lerp(0, maxTilt, speed / 10f);
+            Vector3 hVel = new Vector3(vel.x, 0, vel.z);
+            Quaternion lookRot = Quaternion.LookRotation(hVel);
+            float tilt = Mathf.Lerp(0, maxTilt, hVel.magnitude / maxVelocity);
             Quaternion tiltRot = Quaternion.Euler(tilt, 0, 0);
 
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot * tiltRot, Time.deltaTime * rotationSpeed);
+            transform.rotation = Quaternion.Slerp(transform.rotation, lookRot * tiltRot, Time.deltaTime * rotationSpeed);
 
             dragging = false;
             lineRenderer.enabled = false;
@@ -57,92 +66,96 @@ public class MoverPersonajes : MonoBehaviour
             return;
         }
 
-        // ---------------- INPUT STICK ----------------
+        // ---------------- INPUT DEL JOYSTICK ----------------
         Vector2 stick = pad.leftStick.ReadValue();
 
         // Inicio de arrastre
-        if (!dragging && stick.magnitude > 0.2f)
+        if (!dragging && stick.magnitude > minDragThreshold)
         {
             dragging = true;
+            storedMagnitude = 0;
+            storedDirection = Vector2.zero;
+
             lineRenderer.enabled = true;
-            StartVibration(0.1f);
         }
 
+        // Arrastre
         if (dragging)
         {
-            // Línea usando el stick directamente
-            DrawLine(stick);
+            // Guardamos la dirección y magnitud máximas
+            if (stick.magnitude > storedMagnitude)
+            {
+                storedMagnitude = stick.magnitude;
+                storedDirection = stick.normalized;
+            }
 
-            float intensity = Mathf.Clamp(stick.magnitude * 1.5f, 0f, 1f);
-            StartVibration(intensity);
+            DrawLine(storedDirection, storedMagnitude);
 
             // Lanzar cuando vuelve a neutro
-            if (stick.magnitude < 0.15f)
+            if (stick.magnitude < releaseThreshold)
             {
+                Launch();
                 dragging = false;
                 lineRenderer.enabled = false;
                 StopVibration();
-                LaunchOpposite(stick);
             }
-        }
-        else
-        {
-            StopVibration();
         }
     }
 
     // --------------------------
-    // DIBUJAR LÍNEA CONSISTENTE
+    // DIBUJAR LÍNEA
     // --------------------------
-    void DrawLine(Vector2 stick)
+    void DrawLine(Vector2 dir, float mag)
     {
-        float strength = Mathf.Clamp(stick.magnitude * maxForce, 0, maxForce);
-        Vector2 opposite = -stick.normalized;
+        float strength = Mathf.Clamp(mag * maxForce, 0, maxForce);
+        Vector2 opposite = -dir;
 
-        Vector3 start = rb.transform.position;
+        Vector3 start = rb.transform.position + Vector3.up * 0.1f;
         Vector3 end = start + new Vector3(opposite.x, 0, opposite.y) * (strength / 40f);
 
-        lineRenderer.SetPosition(0, start + Vector3.up * 0.1f);
-        lineRenderer.SetPosition(1, end + Vector3.up * 0.1f);
+        lineRenderer.SetPosition(0, start);
+        lineRenderer.SetPosition(1, end);
+
+        float vib = Mathf.Clamp(mag, 0, 1);
+        StartVibration(vib);
     }
 
     // --------------------------
     // LANZAMIENTO CONSISTENTE
     // --------------------------
-    void LaunchOpposite(Vector2 stick)
+    void Launch()
     {
-        float strength = Mathf.Clamp(stick.magnitude * maxForce, 0, maxForce);
+        if (storedMagnitude < 0.2f) return;
 
-        if (strength < 20f) return;
+        float strength = Mathf.Clamp(storedMagnitude * maxForce, 0, maxForce);
+        Vector3 forceDir = new Vector3(-storedDirection.x, 0, -storedDirection.y);
 
-        Vector3 dir = new Vector3(-stick.x, 0, -stick.y).normalized;
+        rb.AddForce(forceDir * strength * launchMultiplier, ForceMode.Impulse);
 
-        rb.AddForce(dir * strength * launchMultiplier, ForceMode.Impulse);
+        // Limitar velocidad máxima
+        if (rb.linearVelocity.magnitude > maxVelocity)
+            rb.linearVelocity = rb.linearVelocity.normalized * maxVelocity;
     }
 
-    // --------------------
-    // MOTORS DEL MANDO
-    // --------------------
-
+    // -------------------- VIBRACIÓN --------------------
     void StartVibration(float strength)
     {
         if (pad == null) return;
-
         pad.SetMotorSpeeds(strength, strength);
-        vibrating = true;
     }
 
     void StopVibration()
     {
         if (pad == null) return;
-
         pad.SetMotorSpeeds(0, 0);
-        vibrating = false;
     }
 
     public void SetActivePlayer(bool state)
     {
         isActivePlayer = state;
+
+        if (selectionCircleInstance != null)
+            selectionCircleInstance.SetActive(state);
 
         if (!state)
         {
