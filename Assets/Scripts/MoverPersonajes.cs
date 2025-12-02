@@ -25,6 +25,7 @@ public class MoverPersonajes : MonoBehaviour
     public GameObject selectionCirclePrefab;
     private GameObject selectionCircleInstance;
 
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();

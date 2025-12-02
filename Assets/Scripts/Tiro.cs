@@ -13,21 +13,26 @@ public class Tiro : MonoBehaviour
     public Transform hoop;
     public Transform launchPoint;
 
-    [Header("Velocidad extra")]
-    public float speedBoost = 1.5f;
+    public bool HasTheBall = true;   // << POSESIÓN
 
-    [Header("Control de posesión")]
-    public bool HasTheBall = true;   // << NUEVO
+    private Gamepad pad;
+
+    void Start()
+    {
+        pad = Gamepad.current;
+    }
 
     void Update()
     {
+        if (pad == null) return;
+
         transform.LookAt(hoop.position);
 
-        // Si NO tiene la pelota, no puede tirar
-        if (!HasTheBall)
-            return;
+        // ❌ NO puedes tirar si no tienes la pelota
+        if (!HasTheBall) return;
 
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+        // Botón CUADRADO del mando PS5 = buttonWest
+        if (pad.buttonWest.wasPressedThisFrame)
         {
             Shoot();
         }
@@ -35,24 +40,16 @@ public class Tiro : MonoBehaviour
 
     void Shoot()
     {
-        if (ballRb == null || launchPoint == null)
-        {
-            Debug.LogError("BallRb o LaunchPoint no asignados.");
-            return;
-        }
-
-        // Evita que pueda tirar de nuevo hasta que reciba otra pelota
         HasTheBall = false;
 
         Rigidbody ballClone = Instantiate(ballRb, launchPoint.position, launchPoint.rotation);
+        ballClone.tag = "Bola";   // Asegurarse tag correcto
 
         float power = shotBar.GetPower();
         float force = Mathf.Lerp(minForce, maxForce, power);
 
         Vector3 shootDirection = (transform.forward + Vector3.up * arcMultiplier).normalized;
 
-        ballClone.linearVelocity = shootDirection * force * speedBoost;
-
-        Debug.Log("Pelota creada con velocidad: " + ballClone.linearVelocity);
+        ballClone.linearVelocity = shootDirection * force;
     }
 }

@@ -3,8 +3,10 @@ using UnityEngine;
 public class BarraTiro : MonoBehaviour
 {
     public RectTransform arrow;
-    public float baseSpeed = 400f;       // velocidad normal
-    private float currentSpeed;          // velocidad que realmente usa la barra
+
+    [Header("Velocidad base y dinámica")]
+    public float baseSpeed = 400f;
+    private float currentSpeed;
     private bool movingUp = true;
 
     public float minY = -200f;
@@ -14,15 +16,18 @@ public class BarraTiro : MonoBehaviour
     public float perfectMinY = -20f;
     public float perfectMaxY = 20f;
 
-    [Header("Defensa")]
-    public Transform player;             // tu jugador
-    public Transform rival;              // el defensor
-    public float detectionRange = 2f;    // distancia a la que te afecta
-    public float speedMultiplier = 2f;   // cuánta velocidad extra cuando te cubren
+    // --- NUEVO: referencias dinámicas ---
+    [HideInInspector] public Transform player;
+    [HideInInspector] public Transform rival;
+    public float detectionRange = 2f;
+    public float speedMultiplier = 2f;
 
     void Update()
     {
-        UpdateSpeedDependingOnRival();
+        if (player != null && rival != null)
+            UpdateSpeedDependingOnRival();
+        else
+            currentSpeed = baseSpeed;
 
         float newY = arrow.anchoredPosition.y + (movingUp ? 1 : -1) * currentSpeed * Time.deltaTime;
 
@@ -45,13 +50,9 @@ public class BarraTiro : MonoBehaviour
         float dist = Vector3.Distance(player.position, rival.position);
 
         if (dist < detectionRange)
-        {
-            currentSpeed = baseSpeed * speedMultiplier;   // MÁS DIFÍCIL SI TE CUBREN
-        }
+            currentSpeed = baseSpeed * speedMultiplier;
         else
-        {
-            currentSpeed = baseSpeed;                     // velocidad normal
-        }
+            currentSpeed = baseSpeed;
     }
 
     public float GetPower()
