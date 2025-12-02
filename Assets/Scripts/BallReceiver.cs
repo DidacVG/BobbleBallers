@@ -2,30 +2,21 @@ using UnityEngine;
 
 public class BallReceiver : MonoBehaviour
 {
-    void OnTriggerEnter(Collider other)
+    void OnCollisionEnter(Collision col)
     {
-        PaseBalon player = other.GetComponent<PaseBalon>();
+        PaseBalon pass = col.collider.GetComponent<PaseBalon>();
 
-        if (player != null)
+        if (pass != null)
         {
-            // Darle el balón al jugador que lo tocó
-            player.HasTheBall = true;
+            pass.HasTheBall = true;
 
-            // Quitar el balón del resto
-            DesactivarBalonOtros(player);
+            Rigidbody rb = GetComponent<Rigidbody>();
+            rb.linearVelocity = Vector3.zero;
 
-            Destroy(gameObject); // eliminar la pelota física
-        }
-    }
+            transform.SetParent(pass.transform);
+            transform.localPosition = new Vector3(0, 1, 0); // posición en mano
 
-    void DesactivarBalonOtros(PaseBalon nuevoDueño)
-    {
-        PaseBalon[] all = FindObjectsOfType<PaseBalon>();
-
-        foreach (var p in all)
-        {
-            if (p != nuevoDueño)
-                p.HasTheBall = false;
+            Debug.Log("El jugador " + pass.name + " recibe la pelota");
         }
     }
 }

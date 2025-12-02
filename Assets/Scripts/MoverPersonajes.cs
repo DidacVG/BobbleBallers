@@ -47,6 +47,8 @@ public class MoverPersonajes : MonoBehaviour
 
     void Update()
     {
+        if (!GameReadyManager.AllPlayersReady)
+            return;
         if (!isActivePlayer || pad == null) return;
 
         Vector3 vel = rb.linearVelocity;
