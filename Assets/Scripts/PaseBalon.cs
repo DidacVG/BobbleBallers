@@ -35,8 +35,6 @@ public class PaseBalon : MonoBehaviour
 
     void Update()
     {
-        if (!GameReadyManager.AllPlayersReady)
-            return;
         if (!isActivePlayer) return;
         if (!HasTheBall) return;
         if (pad == null) return;

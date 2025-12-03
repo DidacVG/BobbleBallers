@@ -17,8 +17,8 @@ public class BarraTiro : MonoBehaviour
     public float perfectMaxY = 20f;
 
     // --- NUEVO: referencias dinámicas ---
-    [HideInInspector] public Transform player;
-    [HideInInspector] public Transform rival;
+    public Transform player;
+    public Transform rival;
     public float detectionRange = 2f;
     public float speedMultiplier = 2f;
 

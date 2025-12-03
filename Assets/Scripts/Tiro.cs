@@ -3,42 +3,60 @@ using UnityEngine.InputSystem;
 
 public class Tiro : MonoBehaviour
 {
+    [Header("Lanzamiento")]
+    public float maxForce = 0f;
+    public float minForce = 0f;
+    public float arcMultiplier = 0f;
+
+    [Header("Referencias")]
     public Rigidbody ballRb;
-    public BarraTiro shotBar;
-
-    public float maxForce = 10f;
-    public float minForce = 4f;
-    public float arcMultiplier = 0.15f;
-
     public Transform hoop;
     public Transform launchPoint;
+    public BarraTiro shotBar;
 
-    public bool HasTheBall = true;   // << POSESIÓN
+    [Header("Estado")]
+    public bool HasTheBall = true;
 
-    private Gamepad pad;
+    // internos
+    private bool isActivePlayer = false;
+    private Gamepad pad;  // ← mando asignado por PlayerManager
 
-    void Start()
+    private void Update()
     {
-        pad = Gamepad.current;
-    }
-
-    void Update()
-    {
-        if (pad == null) return;
-
-        transform.LookAt(hoop.position);
-
-        // ❌ NO puedes tirar si no tienes la pelota
+        if (!isActivePlayer) return;
         if (!HasTheBall) return;
 
-        // Botón CUADRADO del mando PS5 = buttonWest
-        if (pad.buttonWest.wasPressedThisFrame)
-        {
-            Shoot();
-        }
+        // Mirar hacia la canasta siempre
+        transform.LookAt(hoop.position);
     }
 
-    void Shoot()
+    // ----------------------
+    // INPUT ACTION: Shoot
+    // ----------------------
+    public void OnShoot(InputAction.CallbackContext ctx)
+    {
+        if (!isActivePlayer) return;
+        if (!HasTheBall) return;
+        if (!ctx.performed) return;
+
+        Shoot();
+    }
+
+    // ----------------------
+    // Recibe mando + activación desde PlayerManager
+    // ----------------------
+    public void SetActivePlayer(bool state, Gamepad assignedPad = null)
+    {
+        isActivePlayer = state;
+
+        if (assignedPad != null)
+            pad = assignedPad;
+    }
+
+    // ----------------------
+    // LÓGICA DEL TIRO
+    // ----------------------
+    private void Shoot()
     {
         HasTheBall = false;
 

@@ -25,6 +25,8 @@ public class MoverPersonajes : MonoBehaviour
     public GameObject selectionCirclePrefab;
     private GameObject selectionCircleInstance;
 
+    public int team;   // 0 = Equipo A, 1 = Equipo B
+
 
     void Start()
     {
@@ -33,8 +35,6 @@ public class MoverPersonajes : MonoBehaviour
 
         lineRenderer.positionCount = 2;
         lineRenderer.enabled = false;
-
-        pad = Gamepad.current;
 
         // Crear círculo de selección
         if (selectionCirclePrefab != null)
@@ -47,8 +47,6 @@ public class MoverPersonajes : MonoBehaviour
 
     void Update()
     {
-        if (!GameReadyManager.AllPlayersReady)
-            return;
         if (!isActivePlayer || pad == null) return;
 
         Vector3 vel = rb.linearVelocity;
@@ -85,12 +83,6 @@ public class MoverPersonajes : MonoBehaviour
         // Arrastre
         if (dragging)
         {
-            // Guardamos la dirección y magnitud máximas
-            if (stick.magnitude > storedMagnitude)
-            {
-                storedMagnitude = stick.magnitude;
-                storedDirection = stick.normalized;
-            }
 
             DrawLine(storedDirection, storedMagnitude);
 
@@ -102,6 +94,11 @@ public class MoverPersonajes : MonoBehaviour
                 lineRenderer.enabled = false;
                 StopVibration();
             }
+            if (stick.magnitude > 0.9f)
+            {
+                storedMagnitude = stick.magnitude;
+                storedDirection = stick.normalized;
+            }
         }
     }
 
@@ -111,7 +108,7 @@ public class MoverPersonajes : MonoBehaviour
     void DrawLine(Vector2 dir, float mag)
     {
         float strength = Mathf.Clamp(mag * maxForce, 0, maxForce);
-        Vector2 opposite = -dir;
+        Vector2 opposite = dir;
 
         Vector3 start = rb.transform.position + Vector3.up * 0.1f;
         Vector3 end = start + new Vector3(opposite.x, 0, opposite.y) * (strength / 40f);
@@ -128,10 +125,10 @@ public class MoverPersonajes : MonoBehaviour
     // --------------------------
     void Launch()
     {
-        if (storedMagnitude < 0.2f) return;
+        if (storedMagnitude < minDragThreshold) return;
 
         float strength = Mathf.Clamp(storedMagnitude * maxForce, 0, maxForce);
-        Vector3 forceDir = new Vector3(-storedDirection.x, 0, -storedDirection.y);
+        Vector3 forceDir = new Vector3(storedDirection.x, 0, storedDirection.y);
 
         rb.AddForce(forceDir * strength * launchMultiplier, ForceMode.Impulse);
 
@@ -153,9 +150,13 @@ public class MoverPersonajes : MonoBehaviour
         pad.SetMotorSpeeds(0, 0);
     }
 
-    public void SetActivePlayer(bool state)
+    public void SetActivePlayer(bool state, Gamepad assignedPad = null)
     {
         isActivePlayer = state;
+
+        // Asignar mando
+        if (assignedPad != null)
+            pad = assignedPad;
 
         if (selectionCircleInstance != null)
             selectionCircleInstance.SetActive(state);

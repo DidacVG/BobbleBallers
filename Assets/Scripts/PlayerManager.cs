@@ -5,10 +5,16 @@ public class PlayerManager : MonoBehaviour
 {
     public static PlayerManager Instance;
 
-    public MoverPersonajes[] players;
-    public int currentIndex = 0;
+    [Header("Equipos")]
+    public MoverPersonajes[] teamA;
+    public MoverPersonajes[] teamB;
 
-    private Gamepad pad;
+    private int indexA = 0;
+    private int indexB = 0;
+
+    [Header("Mandos asignados a cada equipo")]
+    public Gamepad teamAPad;
+    public Gamepad teamBPad;
 
     void Awake()
     {
@@ -17,43 +23,72 @@ public class PlayerManager : MonoBehaviour
 
     void Start()
     {
-        pad = Gamepad.current;
+        // Si hay mandos conectados, asigna los primeros automáticamente
+        if (Gamepad.all.Count > 0)
+            teamAPad = Gamepad.all[0];
 
-        // Activar solo el primero
-        UpdateActivePlayer();
+        if (Gamepad.all.Count > 1)
+            teamBPad = Gamepad.all[1];
+
+        UpdateActivePlayers();
     }
 
     void Update()
     {
-        if (pad == null) pad = Gamepad.current;
-        if (pad == null) return;
+        HandleTeamInput(teamAPad, teamA, ref indexA);
+        HandleTeamInput(teamBPad, teamB, ref indexB);
+    }
 
-        // Siguiente
+    void HandleTeamInput(Gamepad pad, MoverPersonajes[] team, ref int index)
+    {
+        if (pad == null) return;
+        if (team.Length == 0) return;
+
+        // Avanzar jugador
         if (pad.rightShoulder.wasPressedThisFrame)
         {
-            currentIndex++;
-            if (currentIndex >= players.Length)
-                currentIndex = 0;
-
-            UpdateActivePlayer();
+            index++;
+            if (index >= team.Length) index = 0;
+            UpdateActivePlayers();
         }
 
-        // Anterior
+        // Retroceder jugador
         if (pad.leftShoulder.wasPressedThisFrame)
         {
-            currentIndex--;
-            if (currentIndex < 0)
-                currentIndex = players.Length - 1;
-
-            UpdateActivePlayer();
+            index--;
+            if (index < 0) index = team.Length - 1;
+            UpdateActivePlayers();
         }
     }
 
-    void UpdateActivePlayer()
+    void UpdateActivePlayers()
     {
-        for (int i = 0; i < players.Length; i++)
+        // --- EQUIPO A ---
+        for (int i = 0; i < teamA.Length; i++)
         {
-            players[i].SetActivePlayer(i == currentIndex);
+            bool isActive = (i == indexA);
+
+            // Activar movimiento
+            teamA[i].SetActivePlayer(isActive, teamAPad);
+
+            // Activar tiro (solo si el personaje tiene el componente)
+            var tiroA = teamA[i].GetComponent<Tiro>();
+            if (tiroA != null)
+                tiroA.SetActivePlayer(isActive, teamAPad);
+        }
+
+        // --- EQUIPO B ---
+        for (int i = 0; i < teamB.Length; i++)
+        {
+            bool isActive = (i == indexB);
+
+            // Activar movimiento
+            teamB[i].SetActivePlayer(isActive, teamBPad);
+
+            // Activar tiro (solo si el personaje tiene el componente)
+            var tiroB = teamB[i].GetComponent<Tiro>();
+            if (tiroB != null)
+                tiroB.SetActivePlayer(isActive, teamBPad);
         }
     }
 }
