@@ -3,71 +3,104 @@ using UnityEngine.InputSystem;
 
 public class Tiro : MonoBehaviour
 {
-    [Header("Lanzamiento")]
-    public float maxForce = 0f;
-    public float minForce = 0f;
-    public float arcMultiplier = 0f;
-
-    [Header("Referencias")]
     public Rigidbody ballRb;
-    public Transform hoop;
-    public Transform launchPoint;
     public BarraTiro shotBar;
 
-    [Header("Estado")]
-    public bool HasTheBall = true;
+    [Header("Fuerza del tiro")]
+    public float baseMaxForce = 10f;
+    public float baseMinForce = 4f;
 
-    // internos
+    public float arcMultiplier = 0.15f;
+
+    public Transform hoop;
+    public Transform launchPoint;
+    public bool HasTheBall = false;
+
+    private Gamepad pad;
+
+    private bool perfectShotPending = false;
+
+    // 🔥 NUEVO: este jugador solo puede tirar si está activo
     private bool isActivePlayer = false;
-    private Gamepad pad;  // ← mando asignado por PlayerManager
 
-    private void Update()
+
+    // ======================================================
+    //             ASIGNACIÓN DEL GAMEPAD DESDE PM
+    // ======================================================
+    public void SetPad(Gamepad assignedPad)
     {
-        if (!isActivePlayer) return;
-        if (!HasTheBall) return;
-
-        // Mirar hacia la canasta siempre
-        transform.LookAt(hoop.position);
+        pad = assignedPad;
     }
 
-    // ----------------------
-    // INPUT ACTION: Shoot
-    // ----------------------
-    public void OnShoot(InputAction.CallbackContext ctx)
+    public void SetActivePlayer(bool active, Gamepad assignedPad)
     {
-        if (!isActivePlayer) return;
-        if (!HasTheBall) return;
-        if (!ctx.performed) return;
+        isActivePlayer = active;
 
-        Shoot();
-    }
-
-    // ----------------------
-    // Recibe mando + activación desde PlayerManager
-    // ----------------------
-    public void SetActivePlayer(bool state, Gamepad assignedPad = null)
-    {
-        isActivePlayer = state;
-
-        if (assignedPad != null)
+        if (active)
             pad = assignedPad;
     }
 
-    // ----------------------
-    // LÓGICA DEL TIRO
-    // ----------------------
-    private void Shoot()
+    void Update()
     {
-        HasTheBall = false;
+        // No hay mando asignado
+        if (pad == null) return;
 
+        // ❌ NO puede tirar si no es el jugador activo del equipo
+        if (!isActivePlayer) return;
+
+        // Botón de tiro
+        if (pad.buttonWest.wasPressedThisFrame)
+        {
+            Shoot();
+        }
+    }
+
+
+    // ======================================================
+    //                      DISPARO
+    // ======================================================
+    void Shoot()
+    {
         Rigidbody ballClone = Instantiate(ballRb, launchPoint.position, launchPoint.rotation);
-        ballClone.tag = "Bola";   // Asegurarse tag correcto
+        ballClone.tag = "Bola";
 
+        Vector3 shootDir;
+
+        // --------------------------------------------------
+        // 🔥 TIRO PERFECTO
+        // --------------------------------------------------
+        if (perfectShotPending)
+        {
+            perfectShotPending = false;
+
+            Vector3 target = hoop.position + Vector3.up * 1.2f;
+            shootDir = (target - launchPoint.position).normalized;
+
+            float perfectForce = 12f;
+            ballClone.linearVelocity = shootDir * perfectForce;
+            return;
+        }
+
+        // --------------------------------------------------
+        // 🔶 TIRO NORMAL
+        // --------------------------------------------------
         float power = shotBar.GetPower();
-        float force = Mathf.Lerp(minForce, maxForce, power);
+        float force = Mathf.Lerp(baseMinForce, baseMaxForce, power);
 
-        Vector3 shootDirection = (transform.forward + Vector3.up * arcMultiplier).normalized;
+        Vector3 targetHoop = hoop.position + Vector3.up * 1.0f;
+        shootDir = (targetHoop - launchPoint.position).normalized;
 
-        ballClone.linearVelocity = shootDirection * force;
+        shootDir = (shootDir + Vector3.up * arcMultiplier).normalized;
+
+        ballClone.linearVelocity = shootDir * force;
+    }
+
+
+    // ======================================================
+    //              POTENCIADOR DE TIRO PERFECTO
+    // ======================================================
+    public void ActivatePerfectShot()
+    {
+        perfectShotPending = true;
     }
 }

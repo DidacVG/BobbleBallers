@@ -54,72 +54,6 @@
             ],
             "bindings": [
                 {
-                    "name": "2D Vector",
-                    "id": "fa6e0cef-f8d1-411f-ad7c-0efabae6d179",
-                    "path": "2DVector",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Pass",
-                    "isComposite": true,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "up",
-                    "id": "e941ed2a-f01b-43ad-9619-057f5ff506c0",
-                    "path": "<Keyboard>/w",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard",
-                    "action": "Pass",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "down",
-                    "id": "24ec8254-8987-42cc-8a4c-e012f1094f2d",
-                    "path": "<Keyboard>/s",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard",
-                    "action": "Pass",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "left",
-                    "id": "8ec79f2c-6940-4cf8-9a8c-c5b77a01bd54",
-                    "path": "<Keyboard>/a",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard",
-                    "action": "Pass",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "right",
-                    "id": "3d9b0246-b7ca-4132-8c6c-231f5ac460cf",
-                    "path": "<Keyboard>/d",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard",
-                    "action": "Pass",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "",
-                    "id": "8849c911-5e9d-48b7-9e65-632c3d7e8df7",
-                    "path": "<Gamepad>/rightStick",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";Controller",
-                    "action": "Pass",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
                     "name": "",
                     "id": "94c2ba41-feed-47dc-9f64-bb1dc94ab060",
                     "path": "<Keyboard>/space",
@@ -226,6 +160,17 @@
                     "processors": "",
                     "groups": ";Controller",
                     "action": "PrevCharacter",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "12060427-85e0-416c-a881-180f0c39b783",
+                    "path": "<Gamepad>/rightStick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Controller",
+                    "action": "Pass",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerManager : MonoBehaviour
@@ -23,7 +23,6 @@ public class PlayerManager : MonoBehaviour
 
     void Start()
     {
-        // Si hay mandos conectados, asigna los primeros autom�ticamente
         if (Gamepad.all.Count > 0)
             teamAPad = Gamepad.all[0];
 
@@ -44,7 +43,6 @@ public class PlayerManager : MonoBehaviour
         if (pad == null) return;
         if (team.Length == 0) return;
 
-        // Avanzar jugador
         if (pad.rightShoulder.wasPressedThisFrame)
         {
             index++;
@@ -52,7 +50,6 @@ public class PlayerManager : MonoBehaviour
             UpdateActivePlayers();
         }
 
-        // Retroceder jugador
         if (pad.leftShoulder.wasPressedThisFrame)
         {
             index--;
@@ -68,13 +65,14 @@ public class PlayerManager : MonoBehaviour
         {
             bool isActive = (i == indexA);
 
-            // Activar movimiento
             teamA[i].SetActivePlayer(isActive, teamAPad);
 
-            // Activar tiro (solo si el personaje tiene el componente)
-            var tiroA = teamA[i].GetComponent<Tiro>();
-            if (tiroA != null)
-                tiroA.SetActivePlayer(isActive, teamAPad);
+            var tiro = teamA[i].GetComponent<Tiro>();
+            if (tiro != null)
+            {
+                tiro.SetActivePlayer(isActive, teamAPad);
+                tiro.SetPad(teamAPad);   // ← AÑADIDO AQUÍ
+            }
         }
 
         // --- EQUIPO B ---
@@ -82,13 +80,36 @@ public class PlayerManager : MonoBehaviour
         {
             bool isActive = (i == indexB);
 
-            // Activar movimiento
             teamB[i].SetActivePlayer(isActive, teamBPad);
 
-            // Activar tiro (solo si el personaje tiene el componente)
-            var tiroB = teamB[i].GetComponent<Tiro>();
-            if (tiroB != null)
-                tiroB.SetActivePlayer(isActive, teamBPad);
+            var tiro = teamB[i].GetComponent<Tiro>();
+            if (tiro != null)
+            {
+                tiro.SetActivePlayer(isActive, teamBPad);
+                tiro.SetPad(teamBPad);   // ← AÑADIDO AQUÍ
+            }
         }
+    }
+
+    public MoverPersonajes GetClosestTeammate(MoverPersonajes fromPlayer)
+    {
+        MoverPersonajes[] team = (fromPlayer.team == 0) ? teamA : teamB;
+
+        float bestDist = Mathf.Infinity;
+        MoverPersonajes best = null;
+
+        foreach (var p in team)
+        {
+            if (p == fromPlayer) continue;
+
+            float d = Vector3.Distance(fromPlayer.transform.position, p.transform.position);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = p;
+            }
+        }
+
+        return best;
     }
 }

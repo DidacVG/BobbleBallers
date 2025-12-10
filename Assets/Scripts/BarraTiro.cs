@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class BarraTiro : MonoBehaviour
 {
@@ -16,20 +17,26 @@ public class BarraTiro : MonoBehaviour
     public float perfectMinY = -20f;
     public float perfectMaxY = 20f;
 
-    // --- NUEVO: referencias dinámicas ---
+    // --- AHORA MÚLTIPLES RIVALES ---
+    [Header("Rivales cercanos")]
     public Transform player;
-    public Transform rival;
+    public Transform[] rivals;
     public float detectionRange = 2f;
-    public float speedMultiplier = 2f;
+
+    [Tooltip("Cuánto aumenta la velocidad por cada rival cercano")]
+    public float speedMultiplier = 1.3f;
+
+    // --- Potenciador temporal (como Mario Kart) ---
+    private float slowMultiplier = 1f;
+    private Coroutine slowRoutine;
 
     void Update()
     {
-        if (player != null && rival != null)
-            UpdateSpeedDependingOnRival();
-        else
-            currentSpeed = baseSpeed;
+        UpdateBaseSpeedFromRivals();
 
-        float newY = arrow.anchoredPosition.y + (movingUp ? 1 : -1) * currentSpeed * Time.deltaTime;
+        float finalSpeed = currentSpeed * slowMultiplier;
+
+        float newY = arrow.anchoredPosition.y + (movingUp ? 1 : -1) * finalSpeed * Time.deltaTime;
 
         if (newY > maxY)
         {
@@ -45,14 +52,54 @@ public class BarraTiro : MonoBehaviour
         arrow.anchoredPosition = new Vector2(arrow.anchoredPosition.x, newY);
     }
 
-    void UpdateSpeedDependingOnRival()
+    // =================================================================
+    //    DETECTAR varios rivales y ACUMULAR multiplicadores
+    // =================================================================
+    void UpdateBaseSpeedFromRivals()
     {
-        float dist = Vector3.Distance(player.position, rival.position);
-
-        if (dist < detectionRange)
-            currentSpeed = baseSpeed * speedMultiplier;
-        else
+        if (player == null || rivals == null || rivals.Length == 0)
+        {
             currentSpeed = baseSpeed;
+            return;
+        }
+
+        int closeCount = 0;
+
+        for (int i = 0; i < rivals.Length; i++)
+        {
+            if (rivals[i] == null) continue;
+
+            if (Vector3.Distance(player.position, rivals[i].position) < detectionRange)
+                closeCount++;
+        }
+
+        if (closeCount == 0)
+        {
+            currentSpeed = baseSpeed;
+            return;
+        }
+
+        // velocidad = baseSpeed * (speedMultiplier ^ closeCount)
+        currentSpeed = baseSpeed * Mathf.Pow(speedMultiplier, closeCount);
+    }
+
+    // =================================================================
+    //  POTENCIADOR TEMPORAL (efecto que dura X segundos)
+    // =================================================================
+    public void ApplyTemporarySlow(float multiplier, float duration)
+    {
+        if (slowRoutine != null)
+            StopCoroutine(slowRoutine);
+
+        slowRoutine = StartCoroutine(SlowEffect(multiplier, duration));
+    }
+
+    IEnumerator SlowEffect(float multiplier, float duration)
+    {
+        slowMultiplier = multiplier;
+        yield return new WaitForSeconds(duration);
+        slowMultiplier = 1f;
+        slowRoutine = null;
     }
 
     public float GetPower()

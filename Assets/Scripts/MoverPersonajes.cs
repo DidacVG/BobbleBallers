@@ -17,8 +17,8 @@ public class MoverPersonajes : MonoBehaviour
     private bool isActivePlayer = false;
     private bool dragging = false;
 
-    private Vector2 storedDirection;       // ← dirección máxima memorizada
-    private float storedMagnitude = 0;     // ← magnitud máxima memorizada
+    private Vector2 storedDirection;
+    private float storedMagnitude = 0;
 
     private Gamepad pad;
 
@@ -27,6 +27,12 @@ public class MoverPersonajes : MonoBehaviour
 
     public int team;   // 0 = Equipo A, 1 = Equipo B
 
+    public bool HasTheBall = false;
+
+    // ========= CONTROLES INVERTIDOS =========
+    public bool invertedControls = false;
+    public float invertedMultiplier => invertedControls ? -1f : 1f;
+    // ========================================
 
     void Start()
     {
@@ -36,7 +42,7 @@ public class MoverPersonajes : MonoBehaviour
         lineRenderer.positionCount = 2;
         lineRenderer.enabled = false;
 
-        // Crear círculo de selección
+        // Círculo de selección
         if (selectionCirclePrefab != null)
         {
             selectionCircleInstance = Instantiate(selectionCirclePrefab, transform);
@@ -68,7 +74,7 @@ public class MoverPersonajes : MonoBehaviour
         }
 
         // ---------------- INPUT DEL JOYSTICK ----------------
-        Vector2 stick = pad.leftStick.ReadValue();
+        Vector2 stick = pad.leftStick.ReadValue() * invertedMultiplier;
 
         // Inicio de arrastre
         if (!dragging && stick.magnitude > minDragThreshold)
@@ -83,7 +89,6 @@ public class MoverPersonajes : MonoBehaviour
         // Arrastre
         if (dragging)
         {
-
             DrawLine(storedDirection, storedMagnitude);
 
             // Lanzar cuando vuelve a neutro
@@ -94,10 +99,12 @@ public class MoverPersonajes : MonoBehaviour
                 lineRenderer.enabled = false;
                 StopVibration();
             }
+
+            // Registrar dirección y magnitud máximas
             if (stick.magnitude > 0.9f)
             {
                 storedMagnitude = stick.magnitude;
-                storedDirection = stick.normalized;
+                storedDirection = stick.normalized;  // ← Ya viene invertido si toca
             }
         }
     }
@@ -108,10 +115,8 @@ public class MoverPersonajes : MonoBehaviour
     void DrawLine(Vector2 dir, float mag)
     {
         float strength = Mathf.Clamp(mag * maxForce, 0, maxForce);
-        Vector2 opposite = dir;
-
         Vector3 start = rb.transform.position + Vector3.up * 0.1f;
-        Vector3 end = start + new Vector3(opposite.x, 0, opposite.y) * (strength / 40f);
+        Vector3 end = start + new Vector3(dir.x, 0, dir.y) * (strength / 40f);
 
         lineRenderer.SetPosition(0, start);
         lineRenderer.SetPosition(1, end);
@@ -132,7 +137,7 @@ public class MoverPersonajes : MonoBehaviour
 
         rb.AddForce(forceDir * strength * launchMultiplier, ForceMode.Impulse);
 
-        // Limitar velocidad máxima
+        // Limitar velocidad
         if (rb.linearVelocity.magnitude > maxVelocity)
             rb.linearVelocity = rb.linearVelocity.normalized * maxVelocity;
     }
