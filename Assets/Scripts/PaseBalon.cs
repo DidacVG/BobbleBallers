@@ -3,94 +3,81 @@ using UnityEngine.InputSystem;
 
 public class PaseBalon : MonoBehaviour
 {
-    public Tiro tiro;                     // Script de tiro
-    public Rigidbody ballPrefab;          // Prefab de la pelota
-    public Transform[] teammates;         // Compañeros de equipo
+    [Header("Ball")]
+    public Rigidbody ballPrefab;          // Prefab del balón a instanciar
+    public Transform spawnPoint;          // El punto desde donde sale el balón
 
-    public float passForce = 8f;
-    public float passArc = 0.1f;
-    public float maxAngle = 45f;          // Ángulo máximo para considerar el pase
+    [Header("Force Settings")]
+    public float maxForce = 0f;
+    public float launchMultiplier = 5f;
+    public float maxVelocity = 15f;
+    public float minDragThreshold = 0.2f;
+    public float releaseThreshold = 0.25f;
 
-    private Gamepad pad;
-
-    void Start()
-    {
-        tiro = GetComponent<Tiro>();
-    }
-
-    public void SetGamepad(Gamepad assignedPad)
-    {
-        pad = assignedPad;
-    }
+    private bool dragging = false;
+    private float storedMagnitude = 0f;
+    private Vector2 storedDirection;
 
     void Update()
     {
+        Gamepad pad = Gamepad.current;
         if (pad == null) return;
 
-        // ❌ NO puedes pasar sin la pelota
-        if (!tiro.HasTheBall) return;
-
-        // Botón R1 del mando PS5 / Xbox
-        if (pad.buttonSouth.wasPressedThisFrame)
-        {
-            PasarConDireccion();
-        }
-    }
-
-    void PasarConDireccion()
-    {
+        // Leer stick derecho
         Vector2 stick = pad.rightStick.ReadValue();
 
-        // ❌ Si el stick no se está moviendo, no hay dirección
-        if (stick.magnitude < 0.3f)
-            return;
-
-        // Dirección del stick en 3D
-        Vector3 dir = new Vector3(stick.x, 0f, stick.y).normalized;
-
-        Transform mejorObjetivo = SeleccionarJugadorDirigido(dir);
-
-        if (mejorObjetivo == null)
-            return;
-
-        tiro.HasTheBall = false;
-
-        // Crear la pelota
-        Rigidbody ballClone = Instantiate(ballPrefab, tiro.launchPoint.position, Quaternion.identity);
-        ballClone.tag = "Bola";
-
-        // Direccion de pase
-        Vector3 passDir = ((mejorObjetivo.position - transform.position).normalized + Vector3.up * passArc).normalized;
-
-        ballClone.linearVelocity = passDir * passForce;
-
-        // Asignar posesión al receptor
-        Tiro tiroReceptor = mejorObjetivo.GetComponent<Tiro>();
-        if (tiroReceptor != null)
-            tiroReceptor.HasTheBall = true;
-    }
-
-    Transform SeleccionarJugadorDirigido(Vector3 inputDir)
-    {
-        Transform mejor = null;
-        float mejorAngulo = maxAngle;
-
-        foreach (Transform t in teammates)
+        // INICIO DEL ARRASTRE
+        if (!dragging && stick.magnitude > minDragThreshold)
         {
-            if (t == transform) continue;
-
-            Vector3 toMate = (t.position - transform.position).normalized;
-
-            float ang = Vector3.Angle(inputDir, toMate);
-
-            // Solo selecciona si está dentro del ángulo del pase
-            if (ang < mejorAngulo)
-            {
-                mejorAngulo = ang;
-                mejor = t;
-            }
+            dragging = true;
+            storedMagnitude = 0;
+            storedDirection = Vector2.zero;
         }
 
-        return mejor;
+        // ARRASTRE
+        if (dragging)
+        {
+            // Lanzar cuando vuelve a neutro
+            if (stick.magnitude < releaseThreshold)
+            {
+                Launch();
+                dragging = false;
+            }
+
+            // Registrar máximo
+            if (stick.magnitude > storedMagnitude)
+            {
+                storedMagnitude = stick.magnitude;
+                storedDirection = stick.normalized;
+            }
+        }
+    }
+
+    // ------------------------------------
+    // LANZAMIENTO: INSTANCIA UN BALÓN NUEVO
+    // ------------------------------------
+    void Launch()
+    {
+        if (storedMagnitude < minDragThreshold)
+            return;
+
+        // Crear nuevo balón
+        Rigidbody ballClone = Instantiate(ballPrefab, spawnPoint.position, spawnPoint.rotation);
+        ballClone.tag = "Bola";
+
+        // Convertir dirección 2D → 3D
+        Vector3 forceDir = new Vector3(storedDirection.x, 0, storedDirection.y);
+
+        // Calcular fuerza
+        float strength = Mathf.Clamp(storedMagnitude * maxForce, 0, maxForce);
+
+        // Aplicar impulso
+        ballClone.AddForce(forceDir * strength * launchMultiplier, ForceMode.Impulse);
+
+        // Limitar velocidad
+        if (ballClone.linearVelocity.magnitude > maxVelocity)
+            ballClone.linearVelocity = ballClone.linearVelocity.normalized * maxVelocity;
+
+        Debug.Log("PASADO → fuerza: " + strength + " dirección: " + storedDirection);
     }
 }

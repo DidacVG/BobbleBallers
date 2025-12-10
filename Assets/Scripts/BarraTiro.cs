@@ -1,11 +1,12 @@
-using UnityEngine;
-using System.Collections;
+﻿using UnityEngine;
+using UnityEngine.UI;
 
 public class BarraTiro : MonoBehaviour
 {
     public RectTransform arrow;
+    public Image arrowImage;
 
-    [Header("Velocidad base y din�mica")]
+    [Header("Velocidad de movimiento")]
     public float baseSpeed = 400f;
     private float currentSpeed;
     private bool movingUp = true;
@@ -17,30 +18,36 @@ public class BarraTiro : MonoBehaviour
     public float perfectMinY = -20f;
     public float perfectMaxY = 20f;
 
-    // --- AHORA M�LTIPLES RIVALES ---
     [Header("Rivales cercanos")]
     public Transform player;
     public Transform[] rivals;
     public float detectionRange = 2f;
 
-    [Tooltip("Cu�nto aumenta la velocidad por cada rival cercano")]
+    [Tooltip("Cuánto baja la fuerza por cada rival (0.2 = -20%)")]
+    public float rivalPenalty = 0.2f;
+
+    public float ForceMultiplier { get; private set; } = 1f;
+    private float powerLimit = 1f;
+
     public float speedMultiplier = 1.3f;
 
-    // --- Potenciador temporal (como Mario Kart) ---
     private float slowMultiplier = 1f;
     private Coroutine slowRoutine;
 
+
     void Update()
     {
-        UpdateBaseSpeedFromRivals();
+        UpdateRivalEffects();
 
         float finalSpeed = currentSpeed * slowMultiplier;
 
         float newY = arrow.anchoredPosition.y + (movingUp ? 1 : -1) * finalSpeed * Time.deltaTime;
 
-        if (newY > maxY)
+        float maxVisualY = minY + (maxY - minY) * powerLimit;
+
+        if (newY > maxVisualY)
         {
-            newY = maxY;
+            newY = maxVisualY;
             movingUp = false;
         }
         if (newY < minY)
@@ -52,14 +59,18 @@ public class BarraTiro : MonoBehaviour
         arrow.anchoredPosition = new Vector2(arrow.anchoredPosition.x, newY);
     }
 
-    // =================================================================
-    //    DETECTAR varios rivales y ACUMULAR multiplicadores
-    // =================================================================
-    void UpdateBaseSpeedFromRivals()
+
+    // ================================================================
+    //       DETECTAR RIVALES – REDUCIR POTENCIA + CAMBIAR COLOR
+    // ================================================================
+    void UpdateRivalEffects()
     {
         if (player == null || rivals == null || rivals.Length == 0)
         {
             currentSpeed = baseSpeed;
+            ForceMultiplier = 1f;
+            powerLimit = 1f;
+            SetArrowColor(0);
             return;
         }
 
@@ -73,35 +84,49 @@ public class BarraTiro : MonoBehaviour
                 closeCount++;
         }
 
-        if (closeCount == 0)
-        {
-            currentSpeed = baseSpeed;
-            return;
-        }
-
-        // velocidad = baseSpeed * (speedMultiplier ^ closeCount)
+        // Velocidad base (si quieres seguir usándola)
         currentSpeed = baseSpeed * Mathf.Pow(speedMultiplier, closeCount);
+
+        // Reducción de fuerza del tiro
+        ForceMultiplier = 1f - rivalPenalty * closeCount;
+        ForceMultiplier = Mathf.Clamp(ForceMultiplier, 0.3f, 1f);
+
+        // La barra solo sube hasta este límite
+        powerLimit = ForceMultiplier;
+
+        // 🔥 CAMBIAR COLOR
+        SetArrowColor(closeCount);
     }
 
-    // =================================================================
-    //  POTENCIADOR TEMPORAL (efecto que dura X segundos)
-    // =================================================================
-    public void ApplyTemporarySlow(float multiplier, float duration)
+
+    // ================================================================
+    //                        COLORES DE LA BARRA
+    // ================================================================
+    void SetArrowColor(int rivals)
     {
-        if (slowRoutine != null)
-            StopCoroutine(slowRoutine);
+        if (arrowImage == null) return;
 
-        slowRoutine = StartCoroutine(SlowEffect(multiplier, duration));
+        switch (rivals)
+        {
+            case 0:
+                arrowImage.color = Color.green;
+                break;
+            case 1:
+                arrowImage.color = Color.yellow;
+                break;
+            case 2:
+                arrowImage.color = new Color(1f, 0.5f, 0f); // naranja
+                break;
+            default:
+                arrowImage.color = Color.red;
+                break;
+        }
     }
 
-    IEnumerator SlowEffect(float multiplier, float duration)
-    {
-        slowMultiplier = multiplier;
-        yield return new WaitForSeconds(duration);
-        slowMultiplier = 1f;
-        slowRoutine = null;
-    }
 
+    // ================================================================
+    //              FUNCIONES QUE USAN OTROS SCRIPTS
+    // ================================================================
     public float GetPower()
     {
         return (arrow.anchoredPosition.y - minY) / (maxY - minY);
