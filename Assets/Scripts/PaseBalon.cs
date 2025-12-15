@@ -17,6 +17,7 @@ public class PaseBalon : MonoBehaviour
     private bool dragging = false;
     private float storedMagnitude = 0f;
     private Vector2 storedDirection;
+    public Tiro posesion;
 
     void Update()
     {
@@ -40,8 +41,12 @@ public class PaseBalon : MonoBehaviour
             // Lanzar cuando vuelve a neutro
             if (stick.magnitude < releaseThreshold)
             {
-                Launch();
-                dragging = false;
+                if (posesion.HasTheBall == true)
+                {
+                    Launch();
+                    dragging = false;
+                    posesion.HasTheBall = false;
+                }
             }
 
             // Registrar máximo

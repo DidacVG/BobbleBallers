@@ -142,6 +142,24 @@ public class MoverPersonajes : MonoBehaviour
             rb.linearVelocity = rb.linearVelocity.normalized * maxVelocity;
     }
 
+    void OnCollisionEnter(Collision collision)
+    {
+        // Solo funciona si choca con un muro
+        if (collision.collider.CompareTag("Muro"))
+        {
+            Vector3 vel = rb.linearVelocity;
+
+            // Invertimos movimiento horizontal (pero NO vertical)
+            vel.x = -vel.x;
+            vel.z = -vel.z;
+
+            rb.linearVelocity = vel;
+
+            // Opcional: pequeño impulso extra para evitar quedarse pegado al muro
+            rb.AddForce(-vel.normalized * 2f, ForceMode.Impulse);
+        }
+    }
+
     // -------------------- VIBRACIÓN --------------------
     void StartVibration(float strength)
     {

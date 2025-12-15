@@ -17,11 +17,16 @@ public class Tiro : MonoBehaviour
 
     public Transform hoop;
     public Transform launchPoint;
+
+    [Header("Posesión de pelota")]
     public bool HasTheBall = false;
 
     private Gamepad pad;
     private bool perfectShotPending = false;
     private bool isActivePlayer = false;
+
+    public MoverPersonajes owner;   // ← ASIGNAR EN INSPECTOR
+
 
     // ======================================================
     // ASIGNACIÓN DEL GAMEPAD DESDE PM
@@ -39,6 +44,7 @@ public class Tiro : MonoBehaviour
             pad = assignedPad;
     }
 
+
     void Update()
     {
         if (pad == null) return;
@@ -46,11 +52,13 @@ public class Tiro : MonoBehaviour
 
         HandleBallVisual();
 
+        // Disparo solo si tengo la pelota
         if (pad.buttonWest.wasPressedThisFrame && HasTheBall)
         {
             Shoot();
         }
     }
+
 
     // ======================================================
     //  CREAR / BORRAR PELOTA VISUAL
@@ -59,7 +67,6 @@ public class Tiro : MonoBehaviour
     {
         if (HasTheBall)
         {
-            // Crear si no existe
             if (ballVisualInstance == null && ballVisualPrefab != null)
             {
                 ballVisualInstance = Instantiate(
@@ -72,7 +79,6 @@ public class Tiro : MonoBehaviour
         }
         else
         {
-            // Eliminar si existe
             if (ballVisualInstance != null)
             {
                 Destroy(ballVisualInstance);
@@ -81,14 +87,54 @@ public class Tiro : MonoBehaviour
         }
     }
 
+
     // ======================================================
-    //                      DISPARO
+    // ✋ DETECCIÓN DE COLISIÓN CON LA PELOTA REAL
+    // ======================================================
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.collider.CompareTag("Bola"))
+        {
+            CatchBall(collision.collider.gameObject);
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Bola"))
+        {
+            CatchBall(other.gameObject);
+        }
+    }
+
+
+    // ======================================================
+    // ✔ RECOGER PELOTA
+    // ======================================================
+    void CatchBall(GameObject ballObj)
+    {
+        // Obtener la pelota
+        Rigidbody ball = ballObj.GetComponent<Rigidbody>();
+        if (ball == null) return;
+
+        // Marcar posesión
+        HasTheBall = true;
+
+        // Eliminar la pelota del suelo
+        Destroy(ballObj);
+
+        // Crear pelota visual inmediatamente
+        HandleBallVisual();
+    }
+
+
+    // ======================================================
+    //                     DISPARO
     // ======================================================
     void Shoot()
     {
         HasTheBall = false;
 
-        // Eliminar la pelota visual
         if (ballVisualInstance != null)
         {
             Destroy(ballVisualInstance);
@@ -98,43 +144,37 @@ public class Tiro : MonoBehaviour
         Rigidbody ballClone = Instantiate(ballRb, launchPoint.position, launchPoint.rotation);
         ballClone.tag = "Bola";
 
-        Vector3 shootDir;
+        BallData data = ballClone.GetComponent<BallData>();
+        if (data == null)
+            data = ballClone.gameObject.AddComponent<BallData>();
 
-        // --------------------------------------------------
-        // 🔥 TIRO PERFECTO
-        // --------------------------------------------------
-        if (perfectShotPending)
+        MoverPersonajes mover = GetComponent<MoverPersonajes>();
+
+        if (mover == null)
         {
-            perfectShotPending = false;
-
-            Vector3 target = hoop.position + Vector3.up * 1.2f;
-            shootDir = (target - launchPoint.position).normalized;
-
-            float perfectForce = 12f;
-            ballClone.linearVelocity = shootDir * perfectForce;
+            Debug.LogError("❌ Tiro NO está en un objeto con MoverPersonajes");
             return;
         }
 
-        // --------------------------------------------------
-        // 🔶 TIRO NORMAL
-        // --------------------------------------------------
+        data.lastShooter = mover;
+        data.hasScored = false;
+        data.wasPerfectShot = perfectShotPending;
+
+        Debug.Log("Shooter asignado correctamente: " + mover.name);
+
+        Vector3 targetHoop = hoop.position + Vector3.up * 1.0f;
+        Vector3 shootDir = (targetHoop - launchPoint.position).normalized;
+        shootDir = (shootDir + Vector3.up * arcMultiplier).normalized;
 
         float power = shotBar.GetPower();
         float force = Mathf.Lerp(baseMinForce, baseMaxForce, power);
 
-        float finalMultiplier = shotBar != null ? shotBar.ForceMultiplier : 1f;
-        force *= finalMultiplier;
-
-        Vector3 targetHoop = hoop.position + Vector3.up * 1.0f;
-        shootDir = (targetHoop - launchPoint.position).normalized;
-
-        shootDir = (shootDir + Vector3.up * arcMultiplier).normalized;
-
         ballClone.linearVelocity = shootDir * force;
     }
 
+
     // ======================================================
-    //              POTENCIADOR DE TIRO PERFECTO
+    // POTENCIADOR DE TIRO PERFECTO
     // ======================================================
     public void ActivatePerfectShot()
     {

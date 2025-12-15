@@ -18,7 +18,7 @@ public class ControlesInvertidosPowerUp : MonoBehaviour
 
     IEnumerator InvertTeam(int teamToInvert)
     {
-        MoverPersonajes[] all = FindObjectsOfType<MoverPersonajes>();
+        MoverPersonajes[] all = FindObjectsByType<MoverPersonajes>(FindObjectsSortMode.None);
 
         foreach (var p in all)
             if (p.team == teamToInvert)

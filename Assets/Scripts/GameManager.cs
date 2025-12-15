@@ -1,56 +1,57 @@
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    [Header("Jugador seleccionado actualmente")]
-    public MoverPersonajes selectedPlayer;
+    public int scoreTeamA = 0;
+    public int scoreTeamB = 0;
 
-    [Header("Jugador que tiene la pelota")]
-    public MoverPersonajes ballHolder;
+    public Transform ballRespawnPoint;
+    public MoverPersonajes lastScorer;
 
-    [Header("Pelota en escena")]
-    public Transform ball;
-    public Rigidbody ballRb;
+    private bool scoringLocked = false;
 
     void Awake()
     {
-        if (Instance == null)
-            Instance = this;
-        else
-            Destroy(gameObject);
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
-    // Seleccionar jugador desde PlayerManager
-    public void SetSelectedPlayer(MoverPersonajes player)
+    public void OnScore(MoverPersonajes scorer, int points, bool resetBall = true)
     {
-        selectedPlayer = player;
+        if (scoringLocked) return;
+        scoringLocked = true;
+
+        if (scorer.team == 0)
+            scoreTeamA += points;
+        else
+            scoreTeamB += points;
+
+        Debug.Log($"Marcador → A: {scoreTeamA} | B: {scoreTeamB}");
+
+        ScoreManager.Instance.RefreshUI();
+
+        if (resetBall)
+            StartCoroutine(ResetAfterScore());
     }
 
-    // Dar la pelota a un jugador
+    IEnumerator ResetAfterScore()
+    {
+        yield return new WaitForSeconds(1f);
+        scoringLocked = false;
+    }
+
+    IEnumerator PerfectShotSlowMotion()
+    {
+        Time.timeScale = 0.4f;
+        yield return new WaitForSecondsRealtime(0.6f);
+        Time.timeScale = 1f;
+    }
+
     public void GiveBallTo(MoverPersonajes player)
     {
-        ballHolder = player;
         player.HasTheBall = true;
-
-        // Fijar pelota al jugador
-        ball.SetParent(player.transform);
-        ball.localPosition = new Vector3(0, 1f, 0.5f);
-
-        ballRb.isKinematic = true;
-        ballRb.linearVelocity = Vector3.zero;
-    }
-
-    // Quitar pelota del jugador (tiro o pase)
-    public void RemoveBallFromPlayer()
-    {
-        if (ballHolder != null)
-            ballHolder.HasTheBall = false;
-
-        ballHolder = null;
-
-        ball.SetParent(null);
-        ballRb.isKinematic = false;
     }
 }

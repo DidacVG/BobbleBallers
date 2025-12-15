@@ -1,6 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class BallData : MonoBehaviour
 {
-    public Tiro shooter;   // Script del tirador
+    public MoverPersonajes lastShooter;
+    public bool hasScored = false;
+    public bool wasPerfectShot;
 }

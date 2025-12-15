@@ -1,25 +1,29 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class ScoreZone : MonoBehaviour
 {
-    public bool isThreePointZone = false;   // Si este collider es la zona de 3 puntos
+    public bool isThreePointZone = false;
 
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Bola")) return;
 
-        // Saber quién lanzó el balón
-        Tiro tiro = other.GetComponent<BallData>()?.shooter;
+        BallData data = other.GetComponent<BallData>();
+        if (data == null) return;
 
-        if (tiro == null) return;
+        // ðŸ”’ EVITAR DOBLES ANOTACIONES
+        if (data.hasScored) return;
 
-        bool isTeamA = tiro.GetComponent<MoverPersonajes>().team == 0;
+        data.hasScored = true;
 
-        // Puntos según zona
         int points = isThreePointZone ? 3 : 2;
 
-        ScoreManager.Instance.AddPoints(isTeamA, points);
+        Debug.Log("SUMANDO PUNTOS: " + points);
 
-        Debug.Log("Anotado: " + points + " puntos");
+        GameManager.Instance.OnScore(
+            data.lastShooter,
+            points,
+            true
+        );
     }
 }
