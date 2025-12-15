@@ -2,7 +2,7 @@
 
 public class ScoreZone : MonoBehaviour
 {
-    public bool isThreePointZone = false;
+    public ParticleSystem particles;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -11,19 +11,18 @@ public class ScoreZone : MonoBehaviour
         BallData data = other.GetComponent<BallData>();
         if (data == null) return;
 
-        // 🔒 EVITAR DOBLES ANOTACIONES
+        // 🔒 Bloqueo total: ya anotó
         if (data.hasScored) return;
 
         data.hasScored = true;
 
-        int points = isThreePointZone ? 3 : 2;
-
-        Debug.Log("SUMANDO PUNTOS: " + points);
-
+        // ✅ SUMA 1 PUNTO SIEMPRE
         GameManager.Instance.OnScore(
             data.lastShooter,
-            points,
+            0,
             true
         );
+
+        Debug.Log("🏀 CANASTA: +1 punto");
     }
 }

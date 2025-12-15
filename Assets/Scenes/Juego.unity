@@ -10346,13 +10346,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1862360406}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 376053067c242ac4598dad2a03ac3f3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   particles: {fileID: 981539053}
-  points: 0
 --- !u!114 &1862360412
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10365,7 +10364,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48476a8e2c60d0e41b941af014934158, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isThreePointZone: 1
+  particles: {fileID: 981539053}
 --- !u!1001 &1873613197
 PrefabInstance:
   m_ObjectHideFlags: 0

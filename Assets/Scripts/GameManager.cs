@@ -21,14 +21,18 @@ public class GameManager : MonoBehaviour
 
     public void OnScore(MoverPersonajes scorer, int points, bool resetBall = true)
     {
-        if (scoringLocked) return;
-        scoringLocked = true;
+        if (scorer == null)
+        {
+            Debug.LogError("OnScore llamado sin scorer");
+            return;
+        }
 
         if (scorer.team == 0)
             scoreTeamA += points;
         else
             scoreTeamB += points;
 
+        Debug.Log($"PUNTOS: Equipo {scorer.team} +{points}");
         Debug.Log($"Marcador → A: {scoreTeamA} | B: {scoreTeamB}");
 
         ScoreManager.Instance.RefreshUI();
