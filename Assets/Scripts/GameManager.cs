@@ -21,6 +21,9 @@ public class GameManager : MonoBehaviour
 
     public void OnScore(MoverPersonajes scorer, int points, bool resetBall = true)
     {
+        if (scoringLocked) return;   // 🔒 BLOQUEO
+        scoringLocked = true;
+
         if (scorer == null) return;
 
         if (scorer.team == 0)
@@ -28,6 +31,7 @@ public class GameManager : MonoBehaviour
         else
             scoreTeamB += points;
 
+        Debug.Log($"PUNTO → Equipo {scorer.team}");
         Debug.Log($"Marcador → A: {scoreTeamA} | B: {scoreTeamB}");
 
         ScoreManager.Instance.RefreshUI();

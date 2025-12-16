@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class MoverPersonajes : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class MoverPersonajes : MonoBehaviour
 
     public Rigidbody rb;
     public LineRenderer lineRenderer;
+    private Tiro tiro;
 
     private bool isActivePlayer = false;
     private bool dragging = false;
@@ -29,6 +31,10 @@ public class MoverPersonajes : MonoBehaviour
 
     public bool HasTheBall = false;
 
+    [Header("Robo de balón")]
+    public bool canSteal = true;
+    public float stealCooldown = 0.5f;
+
     // ========= CONTROLES INVERTIDOS =========
     public bool invertedControls = false;
     public float invertedMultiplier => invertedControls ? -1f : 1f;
@@ -36,6 +42,7 @@ public class MoverPersonajes : MonoBehaviour
 
     void Start()
     {
+
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
 
@@ -107,6 +114,9 @@ public class MoverPersonajes : MonoBehaviour
                 storedDirection = stick.normalized;  // ← Ya viene invertido si toca
             }
         }
+
+        if (HasTheBall)
+            Debug.Log($"{name} TIENE EL BALÓN");
     }
 
     // --------------------------
@@ -158,6 +168,39 @@ public class MoverPersonajes : MonoBehaviour
             // Opcional: pequeño impulso extra para evitar quedarse pegado al muro
             rb.AddForce(-vel.normalized * 2f, ForceMode.Impulse);
         }
+
+        // --- ROBO DE BALÓN ---
+        MoverPersonajes other = collision.collider.GetComponent<MoverPersonajes>();
+        if (other == null) return;
+
+        // No robar a compañeros
+        if (other.team == team) return;
+
+        Tiro otherTiro = other.GetComponent<Tiro>();
+        if (otherTiro == null || tiro == null) return;
+
+        // Robo válido
+        if (canSteal && otherTiro.HasTheBall && !tiro.HasTheBall)
+        {
+            RobarBalon(otherTiro);
+        }
+    }
+
+    void RobarBalon(Tiro victimTiro)
+    {
+        Debug.Log($"{name} roba el balón");
+
+        victimTiro.HasTheBall = false;
+        tiro.HasTheBall = true;
+
+        StartCoroutine(StealCooldown());
+    }
+
+    IEnumerator StealCooldown()
+    {
+        canSteal = false;
+        yield return new WaitForSeconds(stealCooldown);
+        canSteal = true;
     }
 
     public void CreateBallVisual()
@@ -199,5 +242,15 @@ public class MoverPersonajes : MonoBehaviour
             lineRenderer.enabled = false;
             StopVibration();
         }
+    }
+
+    public void TakeBallFrom(MoverPersonajes other)
+    {
+        if (other == null) return;
+
+        other.HasTheBall = false;
+        HasTheBall = true;
+
+        Debug.Log($"{name} ROBA el balón a {other.name}");
     }
 }

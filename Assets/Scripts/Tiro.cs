@@ -55,6 +55,7 @@ public class Tiro : MonoBehaviour
         // Disparo solo si tengo la pelota
         if (pad.buttonWest.wasPressedThisFrame && HasTheBall)
         {
+            transform.LookAt(hoop);
             Shoot();
         }
     }
