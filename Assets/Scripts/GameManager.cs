@@ -8,8 +8,8 @@ public class GameManager : MonoBehaviour
     public int scoreTeamA = 0;
     public int scoreTeamB = 0;
 
-    public Transform ballRespawnPoint;
-    public MoverPersonajes lastScorer;
+    [Header("Estado del balón")]
+    public MoverPersonajes ballHolder;   // ✅ FALTABA ESTO
 
     private bool scoringLocked = false;
 
@@ -21,18 +21,13 @@ public class GameManager : MonoBehaviour
 
     public void OnScore(MoverPersonajes scorer, int points, bool resetBall = true)
     {
-        if (scorer == null)
-        {
-            Debug.LogError("OnScore llamado sin scorer");
-            return;
-        }
+        if (scorer == null) return;
 
         if (scorer.team == 0)
             scoreTeamA += points;
         else
             scoreTeamB += points;
 
-        Debug.Log($"PUNTOS: Equipo {scorer.team} +{points}");
         Debug.Log($"Marcador → A: {scoreTeamA} | B: {scoreTeamB}");
 
         ScoreManager.Instance.RefreshUI();
@@ -47,15 +42,15 @@ public class GameManager : MonoBehaviour
         scoringLocked = false;
     }
 
-    IEnumerator PerfectShotSlowMotion()
-    {
-        Time.timeScale = 0.4f;
-        yield return new WaitForSecondsRealtime(0.6f);
-        Time.timeScale = 1f;
-    }
-
+    // ✅ MÉTODO OFICIAL PARA DAR EL BALÓN
     public void GiveBallTo(MoverPersonajes player)
     {
+        if (ballHolder != null)
+            ballHolder.HasTheBall = false;
+
+        ballHolder = player;
         player.HasTheBall = true;
+
+        Debug.Log($"BALÓN PARA: {player.name}");
     }
 }

@@ -11,9 +11,6 @@ public class MoverPersonajes : MonoBehaviour
     public float rotationSpeed = 10f;
     public float maxTilt = 30f;
 
-    private float stealCooldown = 0.5f;
-    private float lastStealTime = -1f;
-
     public Rigidbody rb;
     public LineRenderer lineRenderer;
 
@@ -161,32 +158,16 @@ public class MoverPersonajes : MonoBehaviour
             // Opcional: pequeño impulso extra para evitar quedarse pegado al muro
             rb.AddForce(-vel.normalized * 2f, ForceMode.Impulse);
         }
-
-        MoverPersonajes otherPlayer = collision.collider.GetComponent<MoverPersonajes>();
-
-        if (otherPlayer == null) return;
-
-        // No robar a compañeros
-        if (otherPlayer.team == team) return;
-
-        // Si el otro tiene la pelota y yo no
-        if (otherPlayer.HasTheBall && !HasTheBall)
-        {
-            StealBallFrom(otherPlayer);
-            if (Time.time - lastStealTime < stealCooldown) return;
-            lastStealTime = Time.time;
-        }
-
     }
 
-    void StealBallFrom(MoverPersonajes otherPlayer)
+    public void CreateBallVisual()
     {
-        Debug.Log($"{name} roba el balón a {otherPlayer.name}");
-
-        otherPlayer.HasTheBall = false;
         HasTheBall = true;
+    }
 
-        // Opcional: feedback visual/sonido
+    public void RemoveBallVisual()
+    {
+        HasTheBall = false;
     }
 
     // -------------------- VIBRACIÓN --------------------
