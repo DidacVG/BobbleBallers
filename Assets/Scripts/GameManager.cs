@@ -1,29 +1,29 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    public int scoreTeamA = 0;
-    public int scoreTeamB = 0;
+    public int scoreTeamA;
+    public int scoreTeamB;
 
-    [Header("Estado del balón")]
     public MoverPersonajes ballHolder;
 
+    public int possessionTeam = 0; // 0 = A, 1 = B
     private bool scoringLocked = false;
 
-    [Header("Posesión")]
-    public int possessionTeam = 0; // 0 = Team A, 1 = Team B
+    [Header("Ball")]
+    public Rigidbody ballPrefab;
+    private GameObject currentBall;
 
     [Header("Respawns")]
-    public Transform ballSpawnPoint;
     public Transform[] teamASpawnPoints;
     public Transform[] teamBSpawnPoints;
 
-    [Header("Ball")]
-    public GameObject currentBall;
+    [Header("Ball Spawn Points")]
+    public Transform ballSpawnTeamA;
+    public Transform ballSpawnTeamB;
 
     void Awake()
     {
@@ -31,9 +31,9 @@ public class GameManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    // ============================
-    // ANOTACIÓN
-    // ============================
+    // =============================
+    // 🏀 CANASTA
+    // =============================
     public void OnScore(MoverPersonajes scorer, int points)
     {
         if (scoringLocked) return;
@@ -46,77 +46,35 @@ public class GameManager : MonoBehaviour
         else
             scoreTeamB += points;
 
-        // 🔥 mantiene posesión quien anota (regla 3v3)
+
+        // 🔥 EN 3v3 EL QUE ANOTA MANTIENE POSESIÓN
         possessionTeam = scorer.team;
 
         ScoreManager.Instance.RefreshUI();
 
-        // ❌ eliminar balón físico
-        DestroyCurrentBall();
-
         StartCoroutine(ResetAfterBasket());
     }
-
-    void DestroyCurrentBall()
-    {
-        if (currentBall != null)
-            Destroy(currentBall);
-
-        currentBall = null;
-
-        if (ballHolder != null)
-            ballHolder.HasTheBall = false;
-
-        ballHolder = null;
-    }
-
-    void GiveBallToTeam(int team)
-    {
-        MoverPersonajes[] players =
-            (team == 0) ? PlayerManager.Instance.teamA : PlayerManager.Instance.teamB;
-
-        // 🧠 puedes mejorar esto luego (más cercano al balón, etc.)
-        MoverPersonajes receiver = players[0];
-
-        GiveBallTo(receiver);
-    }
-
-    void ResetPlayersPositions()
-{
-    for (int i = 0; i < teamASpawnPoints.Length; i++)
-    {
-        PlayerManager.Instance.teamA[i].transform.position =
-            teamASpawnPoints[i].position;
-    }
-
-    for (int i = 0; i < teamBSpawnPoints.Length; i++)
-    {
-        PlayerManager.Instance.teamB[i].transform.position =
-            teamBSpawnPoints[i].position;
-    }
-}
-
 
     IEnumerator ResetAfterBasket()
     {
         yield return new WaitForSeconds(1f);
 
         ResetPlayersPositions();
-        GiveBallToTeam(possessionTeam);
+        SpawnBallForTeam(possessionTeam);
 
         scoringLocked = false;
     }
 
+    // =============================
+    // 🚨 BALÓN FUERA
+    // =============================
     public void OnBallOut()
     {
-        if (scoringLocked) return;
+        int lastTeam = ballHolder != null ? ballHolder.team : possessionTeam;
 
-        scoringLocked = true;
+        possessionTeam = (lastTeam == 0) ? 1 : 0;
 
-        // 🔁 cambia posesión
-        possessionTeam = (possessionTeam == 0) ? 1 : 0;
-
-        DestroyCurrentBall();
+        Debug.Log($"🚨 BALÓN FUERA → posesión para Equipo {possessionTeam}");
 
         StartCoroutine(ResetAfterOut());
     }
@@ -126,15 +84,31 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         ResetPlayersPositions();
-        GiveBallToTeam(possessionTeam);
-
-        scoringLocked = false;
+        SpawnBallForTeam(possessionTeam);
     }
 
+    // =============================
+    // 🔄 RESETS
+    // =============================
+    void ResetPlayersPositions()
+    {
+        for (int i = 0; i < teamASpawnPoints.Length; i++)
+            PlayerManager.Instance.teamA[i].transform.position =
+                teamASpawnPoints[i].position;
 
-    // ============================
-    // DAR BALÓN (posesión oficial)
-    // ============================
+        for (int i = 0; i < teamBSpawnPoints.Length; i++)
+            PlayerManager.Instance.teamB[i].transform.position =
+                teamBSpawnPoints[i].position;
+    }
+
+    void GiveBallToTeam(int team)
+    {
+        MoverPersonajes[] players =
+            (team == 0) ? PlayerManager.Instance.teamA : PlayerManager.Instance.teamB;
+
+        GiveBallTo(players[0]); // simple, estable
+    }
+
     public void GiveBallTo(MoverPersonajes player)
     {
         if (ballHolder != null)
@@ -143,34 +117,41 @@ public class GameManager : MonoBehaviour
         ballHolder = player;
         player.HasTheBall = true;
 
-        Debug.Log($"BALÓN PARA: {player.name} (Equipo {player.team})");
+        Debug.Log($"BALÓN PARA {player.name} (Equipo {player.team})");
     }
 
-    // ============================
-    // 🚨 PETICIÓN DE PASE (CLAVE)
-    // ============================
-    public bool CanPass(int teamRequesting)
+    public void SpawnBallForTeam(int team)
     {
-        if (ballHolder == null) return false;
+        ClearBall();
 
-        // 🔒 SOLO el equipo que tiene el balón puede pasar
-        return ballHolder.team == teamRequesting;
+        GameObject oldBall = GameObject.FindGameObjectWithTag("Bola");
+        if (oldBall != null)
+            Destroy(oldBall);
+
+        Transform spawn = (team == 0) ? ballSpawnTeamA : ballSpawnTeamB;
+
+        Rigidbody newBall = Instantiate(
+            ballPrefab,
+            spawn.position,
+            spawn.rotation
+        );
+
+        newBall.tag = "Bola";
+
+        MoverPersonajes[] players =
+            (team == 0) ? PlayerManager.Instance.teamA : PlayerManager.Instance.teamB;
+
+        GiveBallTo(players[0]);
+
+        Debug.Log($"🏀 SAQUE PARA EQUIPO {team}");
     }
 
-    public bool TryPass(MoverPersonajes passer, MoverPersonajes receiver)
+    public void ClearBall()
     {
-        // 🔒 Validaciones críticas
-        if (passer == null || receiver == null) return false;
-        if (ballHolder != passer) return false;          // 👈 clave
-        if (!passer.HasTheBall) return false;
-        if (passer.team != receiver.team) return false;  // no pasar al rival
-
-        // Transferir posesión
-        passer.HasTheBall = false;
-        receiver.HasTheBall = true;
-        ballHolder = receiver;
-
-        Debug.Log($"PASE: {passer.name} → {receiver.name}");
-        return true;
+        if (ballHolder != null)
+        {
+            ballHolder.HasTheBall = false;
+            ballHolder = null;
+        }
     }
 }
