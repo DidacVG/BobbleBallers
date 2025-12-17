@@ -11,8 +11,8 @@ public class ScoreZone : MonoBehaviour
 
         data.hasScored = true;
 
-        GameManager.Instance.OnScore(
-            data.lastShooter, 2, true);
+        // ✅ Llamada correcta (2 parámetros)
+        GameManager.Instance.OnScore(data.lastShooter, 2);
 
         Debug.Log("🏀 CANASTA");
     }

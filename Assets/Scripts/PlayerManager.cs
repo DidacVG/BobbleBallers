@@ -71,7 +71,13 @@ public class PlayerManager : MonoBehaviour
             if (tiro != null)
             {
                 tiro.SetActivePlayer(isActive, teamAPad);
-                tiro.SetPad(teamAPad);   // ← AÑADIDO AQUÍ
+                tiro.SetPad(teamAPad);
+            }
+
+            var pase = teamA[i].GetComponent<PaseBalon>();
+            if (pase != null)
+            {
+                pase.SetPad(teamAPad);
             }
         }
 
@@ -86,7 +92,13 @@ public class PlayerManager : MonoBehaviour
             if (tiro != null)
             {
                 tiro.SetActivePlayer(isActive, teamBPad);
-                tiro.SetPad(teamBPad);   // ← AÑADIDO AQUÍ
+                tiro.SetPad(teamBPad);
+            }
+
+            var pase = teamB[i].GetComponent<PaseBalon>();
+            if (pase != null)
+            {
+                pase.SetPad(teamBPad);
             }
         }
     }
