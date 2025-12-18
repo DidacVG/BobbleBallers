@@ -35,14 +35,26 @@ public class MoverPersonajes : MonoBehaviour
     public bool canSteal = true;
     public float stealCooldown = 0.5f;
 
-    // ========= CONTROLES INVERTIDOS =========
-    public bool invertedControls = false;
-    public float invertedMultiplier => invertedControls ? -1f : 1f;
-    // ========================================
+    private bool invertControls = false;
+
+    [Header("Freeze")]
+    public bool isFrozen = false;
+    private Coroutine freezeRoutine;
+    public Color freezeColor = Color.cyan;
+
+    private Renderer[] renderers;
+    private MaterialPropertyBlock mpb;
 
     void Start()
     {
+        rb = GetComponent<Rigidbody>();
+        rb.freezeRotation = true;
 
+        renderers = GetComponentsInChildren<Renderer>();
+        mpb = new MaterialPropertyBlock();
+
+        lineRenderer.positionCount = 2;
+        lineRenderer.enabled = false;
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
 
@@ -58,9 +70,26 @@ public class MoverPersonajes : MonoBehaviour
         }
     }
 
+    public void SetInvertControls(bool value)
+    {
+        invertControls = value;
+
+        // 🔥 RESET TOTAL DEL INPUT
+        dragging = false;
+        storedMagnitude = 0f;
+        storedDirection = Vector2.zero;
+
+        if (lineRenderer != null)
+            lineRenderer.enabled = false;
+
+        StopVibration();
+    }
+
     void Update()
     {
-        if (!isActivePlayer || pad == null) return;
+        if (PauseManager.Instance != null && PauseManager.Instance.IsPaused())
+            return;
+        if (!isActivePlayer || pad == null || isFrozen) return;
 
         Vector3 vel = rb.linearVelocity;
 
@@ -81,7 +110,13 @@ public class MoverPersonajes : MonoBehaviour
         }
 
         // ---------------- INPUT DEL JOYSTICK ----------------
-        Vector2 stick = pad.leftStick.ReadValue() * invertedMultiplier;
+        Vector2 stick = pad.leftStick.ReadValue();
+
+        if (invertControls)
+        {
+            stick = -stick;
+            StartVibration(0.8f);
+        }
 
         // Inicio de arrastre
         if (!dragging && stick.magnitude > minDragThreshold)
@@ -147,7 +182,6 @@ public class MoverPersonajes : MonoBehaviour
 
         rb.AddForce(forceDir * strength * launchMultiplier, ForceMode.Impulse);
 
-        // Limitar velocidad
         if (rb.linearVelocity.magnitude > maxVelocity)
             rb.linearVelocity = rb.linearVelocity.normalized * maxVelocity;
     }
@@ -252,5 +286,52 @@ public class MoverPersonajes : MonoBehaviour
         HasTheBall = true;
 
         Debug.Log($"{name} ROBA el balón a {other.name}");
+    }
+
+    public void Freeze(float duration)
+    {
+        if (freezeRoutine != null)
+            StopCoroutine(freezeRoutine);
+
+        freezeRoutine = StartCoroutine(FreezeRoutine(duration));
+    }
+
+    IEnumerator FreezeRoutine(float duration)
+    {
+        isFrozen = true;
+
+        rb.linearVelocity = Vector3.zero;
+        ApplyFreezeColor();
+
+        dragging = false;
+        storedMagnitude = 0f;
+        storedDirection = Vector2.zero;
+
+        if (lineRenderer != null)
+            lineRenderer.enabled = false;
+
+        StopVibration();
+
+        yield return new WaitForSeconds(duration);
+
+        isFrozen = false;
+        ClearFreezeColor();
+        freezeRoutine = null;
+    }
+    void ApplyFreezeColor()
+    {
+        foreach (Renderer r in renderers)
+        {
+            r.GetPropertyBlock(mpb);
+            mpb.SetColor("_Color", freezeColor);
+            r.SetPropertyBlock(mpb);
+        }
+    }
+    void ClearFreezeColor()
+    {
+        foreach (Renderer r in renderers)
+        {
+            r.SetPropertyBlock(null);
+        }
     }
 }

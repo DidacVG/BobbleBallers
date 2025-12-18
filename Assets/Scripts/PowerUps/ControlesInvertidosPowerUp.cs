@@ -1,33 +1,20 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 
 public class ControlesInvertidosPowerUp : MonoBehaviour
 {
-    public float duration = 5f;
+    public float effectDuration = 5f;
 
     private void OnTriggerEnter(Collider other)
     {
+        GameManager.Instance.NotifyPowerUpConsumed();
         MoverPersonajes player = other.GetComponent<MoverPersonajes>();
         if (player == null) return;
 
-        int enemyTeam = (player.team == 0 ? 1 : 0);
+        int targetTeam = (player.team == 0) ? 1 : 0;
 
-        StartCoroutine(InvertTeam(enemyTeam));
+        GameManager.Instance.StartInvertControls(targetTeam, effectDuration);
+
         Destroy(gameObject);
-    }
-
-    IEnumerator InvertTeam(int teamToInvert)
-    {
-        MoverPersonajes[] all = FindObjectsByType<MoverPersonajes>(FindObjectsSortMode.None);
-
-        foreach (var p in all)
-            if (p.team == teamToInvert)
-                p.invertedControls = true;
-
-        yield return new WaitForSeconds(duration);
-
-        foreach (var p in all)
-            if (p.team == teamToInvert)
-                p.invertedControls = false;
     }
 }

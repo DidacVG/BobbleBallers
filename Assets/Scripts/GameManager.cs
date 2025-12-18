@@ -25,6 +25,19 @@ public class GameManager : MonoBehaviour
     public Transform ballSpawnTeamA;
     public Transform ballSpawnTeamB;
 
+    [Header("Power Ups")]
+    private bool doublePointsTeamA = false;
+    private bool doublePointsTeamB = false;
+
+    [Header("Power Ups")]
+    public GameObject[] powerUpPrefabs;   // Prefabs posibles
+    public Transform[] powerUpSpawnPoints; // Puntos válidos del campo
+
+    public int basketsForPowerUp = 3;
+
+    private int basketCounter = 0;
+    private GameObject currentPowerUp;
+
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -41,18 +54,81 @@ public class GameManager : MonoBehaviour
 
         if (scorer == null) return;
 
+        int finalPoints = points;
+
+        // 🟣 DOBLE PUNTUACIÓN
+        if (scorer.team == 0 && doublePointsTeamA)
+        {
+            finalPoints *= 2;
+            doublePointsTeamA = false;
+            Debug.Log("🔥 x2 consumido por Equipo A");
+        }
+        else if (scorer.team == 1 && doublePointsTeamB)
+        {
+            finalPoints *= 2;
+            doublePointsTeamB = false;
+            Debug.Log("🔥 x2 consumido por Equipo B");
+        }
+
         if (scorer.team == 0)
-            scoreTeamA += points;
+            scoreTeamA += finalPoints;
         else
-            scoreTeamB += points;
+            scoreTeamB += finalPoints;
 
-
-        // 🔥 EN 3v3 EL QUE ANOTA MANTIENE POSESIÓN
         possessionTeam = scorer.team;
 
         ScoreManager.Instance.RefreshUI();
 
+        basketCounter++;
+
+        if (basketCounter >= basketsForPowerUp)
+        {
+            basketCounter = 0;
+            TrySpawnPowerUp();
+        }
+
         StartCoroutine(ResetAfterBasket());
+    }
+
+    void TrySpawnPowerUp()
+    {
+        if (currentPowerUp != null)
+            return; // Ya hay uno activo
+
+        if (powerUpPrefabs.Length == 0 || powerUpSpawnPoints.Length == 0)
+            return;
+
+        GameObject prefab =
+            powerUpPrefabs[Random.Range(0, powerUpPrefabs.Length)];
+
+        Transform spawnPoint =
+            powerUpSpawnPoints[Random.Range(0, powerUpSpawnPoints.Length)];
+
+        currentPowerUp = Instantiate(
+            prefab,
+            spawnPoint.position,
+            spawnPoint.rotation
+        );
+
+        Debug.Log("🎁 Power-Up generado");
+    }
+
+    public void NotifyPowerUpConsumed()
+    {
+        currentPowerUp = null;
+    }
+
+    bool IsSpawnSafe(Vector3 pos)
+    {
+        foreach (var p in PlayerManager.Instance.teamA)
+            if (Vector3.Distance(p.transform.position, pos) < 1.5f)
+                return false;
+
+        foreach (var p in PlayerManager.Instance.teamB)
+            if (Vector3.Distance(p.transform.position, pos) < 1.5f)
+                return false;
+
+        return true;
     }
 
     IEnumerator ResetAfterBasket()
@@ -101,13 +177,6 @@ public class GameManager : MonoBehaviour
                 teamBSpawnPoints[i].position;
     }
 
-    void GiveBallToTeam(int team)
-    {
-        MoverPersonajes[] players =
-            (team == 0) ? PlayerManager.Instance.teamA : PlayerManager.Instance.teamB;
-
-        GiveBallTo(players[0]); // simple, estable
-    }
 
     public void GiveBallTo(MoverPersonajes player)
     {
@@ -152,6 +221,43 @@ public class GameManager : MonoBehaviour
         {
             ballHolder.HasTheBall = false;
             ballHolder = null;
+        }
+    }
+
+    public void StartInvertControls(int team, float duration)
+    {
+        StartCoroutine(InvertControlsCoroutine(team, duration));
+    }
+
+    IEnumerator InvertControlsCoroutine(int team, float duration)
+    {
+        Debug.Log($"🔀 Controles invertidos para equipo {team}");
+
+        MoverPersonajes[] targets =
+            (team == 0) ? PlayerManager.Instance.teamA : PlayerManager.Instance.teamB;
+
+        foreach (var p in targets)
+            p.SetInvertControls(true);
+
+        yield return new WaitForSeconds(duration);
+
+        foreach (var p in targets)
+            p.SetInvertControls(false);
+
+        Debug.Log($"✅ Controles restaurados para equipo {team}");
+    }
+
+    public void ActivateDoublePoints(int team)
+    {
+        if (team == 0)
+        {
+            doublePointsTeamA = true;
+            Debug.Log("🟣 Equipo A ACTIVÓ x2 puntos");
+        }
+        else
+        {
+            doublePointsTeamB = true;
+            Debug.Log("🟣 Equipo B ACTIVÓ x2 puntos");
         }
     }
 }

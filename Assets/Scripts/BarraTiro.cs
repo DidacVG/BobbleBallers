@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class BarraTiro : MonoBehaviour
 {
@@ -136,5 +137,23 @@ public class BarraTiro : MonoBehaviour
     {
         float y = arrow.anchoredPosition.y;
         return y >= perfectMinY && y <= perfectMaxY;
+    }
+
+    public void ApplySlow(float multiplier, float duration)
+    {
+        if (slowRoutine != null)
+            StopCoroutine(slowRoutine);
+
+        slowRoutine = StartCoroutine(SlowRoutine(multiplier, duration));
+    }
+
+    private IEnumerator SlowRoutine(float multiplier, float duration)
+    {
+        slowMultiplier = multiplier;   // Ej: 0.4f → mucho más lenta
+
+        yield return new WaitForSeconds(duration);
+
+        slowMultiplier = 1f;
+        slowRoutine = null;
     }
 }
